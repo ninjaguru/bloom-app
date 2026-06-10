@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maison Salon — Premium At-Home Beauty & Grooming</title>
+  <meta name="description" content="Book premium at-home salon services. Korean waxing, facials, massages, grooming and more — delivered to your doorstep by expert beauticians." />
+  <meta name="theme-color" content="#1a0a2e" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/index.css" />
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="app-header" id="app-header">
+    <div class="header-inner">
+      <div class="logo" id="logo">
+        <span class="logo-icon">✿</span>
+        <span class="logo-text">Maison<span class="logo-accent">Salon</span></span>
+      </div>
+      <nav class="header-nav">
+        <button class="cart-toggle" id="cart-toggle" aria-label="Open cart">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          <span class="cart-badge" id="cart-badge">0</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">Salon Luxury,<br/><span class="hero-accent">At Your Doorstep</span></h1>
+      <p class="hero-subtitle">Premium beauty & grooming services delivered to your home by certified professionals</p>
+      <div class="gender-toggle" id="gender-toggle">
+        <button class="gender-btn active" data-gender="women" id="gender-women">
+          <span class="gender-icon">👩</span> Women
+        </button>
+        <button class="gender-btn" data-gender="men" id="gender-men">
+          <span class="gender-icon">👨</span> Men
+        </button>
+        <div class="gender-slider" id="gender-slider"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CATEGORIES ============ -->
+  <section class="categories-section" id="categories-section">
+    <div class="container">
+      <div class="categories-scroll" id="categories-scroll">
+        <!-- Category pills rendered by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SERVICES GRID ============ -->
+  <section class="services-section" id="services-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title" id="section-title">Popular Services</h2>
+        <p class="section-subtitle" id="section-subtitle">Curated by our expert beauticians</p>
+      </div>
+      <div class="services-grid" id="services-grid">
+        <!-- Service cards rendered by JS -->
+      </div>
+      <div class="services-loading" id="services-loading">
+        <div class="loader"></div>
+        <p>Loading services...</p>
+      </div>
+      <div class="services-empty" id="services-empty" style="display:none;">
+        <span class="empty-icon">🔍</span>
+        <p>No services found in this category</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DISCOUNT BANNER ============ -->
+  <section class="discount-banner" id="discount-banner">
+    <div class="container">
+      <div class="banner-content">
+        <div class="banner-icon">🎁</div>
+        <div class="banner-text">
+          <h3>Bundle & Save up to 20%</h3>
+          <p>Add more services to your cart for bigger discounts!</p>
+        </div>
+        <div class="discount-tiers">
+          <span class="tier">2+ items: <strong>5% off</strong></span>
+          <span class="tier">3+ items: <strong>10% off</strong></span>
+          <span class="tier">4+ items: <strong>15% off</strong></span>
+          <span class="tier">5+ items: <strong>20% off</strong></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SERVICE DETAIL MODAL ============ -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="service-modal">
+      <button class="modal-close" id="modal-close" aria-label="Close modal">✕</button>
+      <div class="modal-body" id="modal-body">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CART DRAWER ============ -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <aside class="cart-drawer" id="cart-drawer">
+    <div class="cart-header">
+      <h2>Your Cart</h2>
+      <button class="cart-close" id="cart-close" aria-label="Close cart">✕</button>
+    </div>
+    <div class="cart-items" id="cart-items">
+      <!-- Cart items rendered by JS -->
+    </div>
+    <div class="cart-empty" id="cart-empty">
+      <span class="empty-cart-icon">🛒</span>
+      <p>Your cart is empty</p>
+      <p class="cart-empty-sub">Browse services and add them to your cart</p>
+    </div>
+    <div class="cart-footer" id="cart-footer">
+      <div class="cart-discount-info" id="cart-discount-info"></div>
+      <div class="cart-summary">
+        <div class="cart-row">
+          <span>Subtotal</span>
+          <span id="cart-subtotal">₹0</span>
+        </div>
+        <div class="cart-row discount-row" id="discount-row" style="display:none;">
+          <span>Bundle Discount</span>
+          <span class="discount-value" id="cart-discount">-₹0</span>
+        </div>
+        <div class="cart-row cart-total">
+          <span>Total</span>
+          <span id="cart-total">₹0</span>
+        </div>
+      </div>
+      <button class="checkout-btn" id="checkout-btn">
+        <span>Confirm Booking</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============ BOOKING MODAL ============ -->
+  <div class="booking-overlay" id="booking-overlay">
+    <div class="booking-modal" id="booking-modal">
+      <div class="booking-header">
+        <div>
+          <h2>Book Appointment</h2>
+          <p class="booking-summary" id="booking-summary"></p>
+        </div>
+        <button class="modal-close" id="booking-close" aria-label="Close">✕</button>
+      </div>
+      <div class="booking-body">
+        <div class="booking-section">
+          <h3 class="booking-section-title">Select Date</h3>
+          <div class="booking-dates" id="booking-dates"></div>
+        </div>
+        <div class="booking-section">
+          <h3 class="booking-section-title">Select Time Slot</h3>
+          <div class="booking-slots" id="booking-slots"></div>
+        </div>
+        <div class="booking-section">
+          <h3 class="booking-section-title">Your Details</h3>
+          <div class="booking-form">
+            <input class="booking-input" id="booking-name" type="text" placeholder="Full Name" autocomplete="name" />
+            <input class="booking-input" id="booking-phone" type="tel" placeholder="Mobile Number (10 digits)" maxlength="10" autocomplete="tel" />
+            <textarea class="booking-input booking-textarea" id="booking-address" placeholder="Flat No., Street, Area, Bangalore" rows="3"></textarea>
+          </div>
+        </div>
+        <p class="booking-error" id="booking-error"></p>
+      </div>
+      <div class="booking-footer">
+        <button class="checkout-btn" id="booking-confirm-btn">
+          <span>Confirm Booking</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CHECKOUT SUCCESS TOAST ============ -->
+  <div class="toast" id="toast">
+    <div class="toast-icon">✓</div>
+    <div class="toast-text" id="toast-text">Booking confirmed!</div>
+  </div>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="app-footer" id="app-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <span class="logo-icon">✿</span>
+          <span class="logo-text">Maison<span class="logo-accent">Salon</span></span>
+          <p class="footer-tagline">Premium at-home beauty experiences</p>
+        </div>
+        <div class="footer-links">
+          <a href="#">About</a>
+          <a href="#">Services</a>
+          <a href="#">Careers</a>
+          <a href="#">Contact</a>
+        </div>
+        <p class="footer-copy">&copy; 2026 MaisonSalon. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

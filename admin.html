@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Maison Salon</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/admin.css" />
+</head>
+<body>
+
+  <!-- ============ LOGIN ============ -->
+  <div id="login-screen" style="display:none;">
+    <div class="login-card">
+      <div class="login-logo">
+        <span class="logo-icon">✿</span>
+        <h1>Maison<span>Salon</span></h1>
+        <span class="admin-badge">Admin Portal</span>
+      </div>
+      <form class="login-form" id="login-form" novalidate>
+        <div class="form-group">
+          <label for="admin-email">Email</label>
+          <input class="form-input" id="admin-email" type="email" placeholder="admin@maison.com" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label for="admin-password">Password</label>
+          <input class="form-input" id="admin-password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+        </div>
+        <p class="login-error" id="login-error"></p>
+        <button class="login-btn" type="submit" id="login-btn">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ DASHBOARD ============ -->
+  <div id="admin-screen" style="display:none;">
+
+    <header class="admin-header">
+      <div class="admin-header-left">
+        <span class="logo-icon">✿</span>
+        Maison<span>Salon</span>
+        <span class="admin-badge-sm">Admin</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:0.82rem;color:var(--color-text-muted)" id="admin-user-email"></span>
+        <button class="signout-btn" id="signout-btn">Sign Out</button>
+      </div>
+    </header>
+
+    <main class="admin-body">
+
+      <!-- KPI Cards -->
+      <div class="stats-grid" id="kpi-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Bookings</div>
+          <div class="stat-value accent" id="stat-total">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Revenue</div>
+          <div class="stat-value gold" id="stat-revenue">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Today's Appointments</div>
+          <div class="stat-value green" id="stat-today">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg. Order Value</div>
+          <div class="stat-value accent" id="stat-avg">—</div>
+        </div>
+      </div>
+
+      <!-- Tab Nav -->
+      <nav class="admin-tabs">
+        <button class="tab-btn active" data-tab="bookings">📋 Bookings</button>
+        <button class="tab-btn" data-tab="sales">📈 Sales</button>
+        <button class="tab-btn" data-tab="inventory">🗂 Inventory</button>
+        <button class="tab-btn" data-tab="staff">👥 Staff</button>
+      </nav>
+
+      <!-- ===== TAB: BOOKINGS ===== -->
+      <div class="tab-panel active" id="tab-bookings">
+        <div class="section-header">
+          <h2 class="section-title">All Bookings</h2>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <select id="status-filter" class="admin-select">
+              <option value="all">All Status</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <button class="refresh-btn" id="refresh-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Services</th>
+                <th>Date &amp; Time</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orders-tbody">
+              <tr><td colspan="6"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== TAB: SALES ===== -->
+      <div class="tab-panel" id="tab-sales">
+        <div class="report-grid-2">
+
+          <!-- Status breakdown -->
+          <div class="report-card">
+            <h3 class="report-card-title">Booking Status</h3>
+            <div id="sales-status"></div>
+          </div>
+
+          <!-- Revenue by category -->
+          <div class="report-card">
+            <h3 class="report-card-title">Revenue by Category</h3>
+            <div id="sales-category"></div>
+          </div>
+
+        </div>
+
+        <!-- Top services by revenue -->
+        <div class="report-card" style="margin-top:16px;">
+          <h3 class="report-card-title">Top Services by Revenue</h3>
+          <div id="sales-top-services"></div>
+        </div>
+
+        <!-- Daily bookings (last 14 days) -->
+        <div class="report-card" style="margin-top:16px;">
+          <h3 class="report-card-title">Daily Bookings — Last 14 Days</h3>
+          <div id="sales-daily"></div>
+        </div>
+      </div>
+
+      <!-- ===== TAB: INVENTORY ===== -->
+      <div class="tab-panel" id="tab-inventory">
+
+        <div class="report-grid-2" style="margin-bottom:16px;">
+          <div class="report-card">
+            <h3 class="report-card-title">Category Distribution</h3>
+            <div id="inv-category-chart"></div>
+          </div>
+          <div class="report-card">
+            <h3 class="report-card-title">Gender Split</h3>
+            <div id="inv-gender-chart"></div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <h2 class="section-title">Service Catalog</h2>
+          <select id="inv-gender-filter" class="admin-select">
+            <option value="all">All</option>
+            <option value="women">Women</option>
+            <option value="men">Men</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th>Category</th>
+                <th>Gender</th>
+                <th>Price</th>
+                <th>Discount</th>
+                <th>Bookings</th>
+                <th>Revenue</th>
+              </tr>
+            </thead>
+            <tbody id="inv-tbody">
+              <tr><td colspan="7"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== TAB: STAFF ===== -->
+      <div class="tab-panel" id="tab-staff">
+
+        <div class="report-grid-2">
+          <!-- Time slot utilization -->
+          <div class="report-card">
+            <h3 class="report-card-title">Time Slot Popularity</h3>
+            <div id="staff-slots"></div>
+          </div>
+
+          <!-- Day of week -->
+          <div class="report-card">
+            <h3 class="report-card-title">Day of Week Demand</h3>
+            <div id="staff-dow"></div>
+          </div>
+        </div>
+
+        <!-- Upcoming appointments -->
+        <div class="report-card" style="margin-top:16px;">
+          <h3 class="report-card-title">Upcoming Appointments (Next 7 Days)</h3>
+          <div id="staff-upcoming"></div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <div class="admin-toast" id="admin-toast"></div>
+
+  <script type="module" src="/src/admin.js"></script>
+</body>
+</html>
