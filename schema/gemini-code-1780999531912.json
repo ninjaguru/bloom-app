@@ -1,0 +1,31 @@
+{
+  "$schema": "https://antigravity.google.com/schemas/skill-config.v1.json",
+  "project_id": "salon-at-home-app",
+  "target_platforms": ["android", "web"],
+  "architecture_pattern": "flutter-riverpod-firebase",
+  "data_models": {
+    "services_collection": {
+      "fields": {
+        "serviceId": "string (unique identifier)",
+        "title": "string (e.g., Full Arms + Full Legs + Underarms Korean Waxing)",
+        "gender": "enum ['women', 'men']",
+        "category": "string",
+        "price": "number (integer local currency)",
+        "originalPrice": "number (integer local currency)",
+        "durationMinutes": "number (minutes)",
+        "rating": "number (float)",
+        "reviewCount": "number (integer)",
+        "promoVideoUrl": "string (url to cloud storage)",
+        "ritualSteps": "array [object { step: int, title: string, desc: string }]",
+        "procedureSteps": "array [object { step: int, title: string, image: string }]"
+      },
+      "indexes": [
+        { "fields": ["gender", "category"], "type": "composite" }
+      ]
+    }
+  },
+  "client_state_rules": {
+    "cart_persistence": "local_memory_only",
+    "firestore_write_trigger": "on_checkout_confirmation"
+  }
+}
