@@ -76,8 +76,10 @@
       <nav class="admin-tabs">
         <button class="tab-btn active" data-tab="bookings">📋 Bookings</button>
         <button class="tab-btn" data-tab="sales">📈 Sales</button>
+        <button class="tab-btn" data-tab="services">🛎 Services</button>
         <button class="tab-btn" data-tab="inventory">🗂 Inventory</button>
         <button class="tab-btn" data-tab="staff">👥 Staff</button>
+        <button class="tab-btn" data-tab="reports">📊 Reports</button>
       </nav>
 
       <!-- ===== TAB: BOOKINGS ===== -->
@@ -149,27 +151,19 @@
         </div>
       </div>
 
-      <!-- ===== TAB: INVENTORY ===== -->
-      <div class="tab-panel" id="tab-inventory">
-
-        <div class="report-grid-2" style="margin-bottom:16px;">
-          <div class="report-card">
-            <h3 class="report-card-title">Category Distribution</h3>
-            <div id="inv-category-chart"></div>
-          </div>
-          <div class="report-card">
-            <h3 class="report-card-title">Gender Split</h3>
-            <div id="inv-gender-chart"></div>
-          </div>
-        </div>
+      <!-- ===== TAB: SERVICES ===== -->
+      <div class="tab-panel" id="tab-services">
 
         <div class="section-header">
-          <h2 class="section-title">Service Catalog</h2>
-          <select id="inv-gender-filter" class="admin-select">
-            <option value="all">All</option>
-            <option value="women">Women</option>
-            <option value="men">Men</option>
-          </select>
+          <h2 class="section-title">Services</h2>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <select id="inv-gender-filter" class="admin-select">
+              <option value="all">All</option>
+              <option value="women">Women</option>
+              <option value="men">Men</option>
+            </select>
+            <button class="refresh-btn add-svc-btn" id="add-svc-btn">+ Add Service</button>
+          </div>
         </div>
         <div class="table-wrap">
           <table>
@@ -182,13 +176,58 @@
                 <th>Discount</th>
                 <th>Bookings</th>
                 <th>Revenue</th>
+                <th>Edit</th>
               </tr>
             </thead>
             <tbody id="inv-tbody">
-              <tr><td colspan="7"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
+              <tr><td colspan="8"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
             </tbody>
           </table>
         </div>
+      </div>
+
+      <!-- ===== TAB: INVENTORY ===== -->
+      <div class="tab-panel" id="tab-inventory">
+
+        <div class="stats-grid" style="margin-bottom:16px;" id="inv-kpi-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Products</div>
+            <div class="stat-value accent" id="inv-stat-total">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Low Stock</div>
+            <div class="stat-value" style="color:#ff6b6b" id="inv-stat-low">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Stock Value</div>
+            <div class="stat-value gold" id="inv-stat-value">—</div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <h2 class="section-title">Products</h2>
+          <button class="refresh-btn add-svc-btn" id="add-prod-btn">+ Add Product</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Brand</th>
+                <th>Category</th>
+                <th>Stock</th>
+                <th>Unit</th>
+                <th>Cost Price</th>
+                <th>Status</th>
+                <th>Edit</th>
+              </tr>
+            </thead>
+            <tbody id="inv-prod-tbody">
+              <tr><td colspan="8"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
 
       <!-- ===== TAB: STAFF ===== -->
@@ -216,10 +255,206 @@
 
       </div>
 
+      <!-- ===== TAB: REPORTS ===== -->
+      <div class="tab-panel" id="tab-reports">
+
+        <!-- ── Revenue Overview ─────────────────── -->
+        <h2 class="report-section-heading">Revenue Overview</h2>
+        <div class="stats-grid" style="margin-bottom:16px;">
+          <div class="stat-card">
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-value gold" id="rpt-revenue">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg Order Value</div>
+            <div class="stat-value accent" id="rpt-aov">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Completion Rate</div>
+            <div class="stat-value green" id="rpt-completion">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Cancellation Rate</div>
+            <div class="stat-value" style="color:#ff6b6b" id="rpt-cancel">—</div>
+          </div>
+        </div>
+        <div class="report-card" style="margin-bottom:16px;">
+          <h3 class="report-card-title">Daily Revenue — Last 14 Days</h3>
+          <div id="rpt-daily-revenue"></div>
+        </div>
+
+        <!-- ── Booking Analytics ──────────────────── -->
+        <h2 class="report-section-heading">Booking Analytics</h2>
+        <div class="report-grid-2" style="margin-bottom:16px;">
+          <div class="report-card">
+            <h3 class="report-card-title">Booking Status Breakdown</h3>
+            <div id="rpt-status"></div>
+          </div>
+          <div class="report-card">
+            <h3 class="report-card-title">Bookings by Day of Week</h3>
+            <div id="rpt-dow"></div>
+          </div>
+        </div>
+        <div class="report-card" style="margin-bottom:16px;">
+          <h3 class="report-card-title">Time Slot Popularity</h3>
+          <div id="rpt-slots"></div>
+        </div>
+
+        <!-- ── Service Performance ────────────────── -->
+        <h2 class="report-section-heading">Service Performance</h2>
+        <div class="report-grid-2" style="margin-bottom:16px;">
+          <div class="report-card">
+            <h3 class="report-card-title">Top Services by Revenue</h3>
+            <div id="rpt-top-revenue"></div>
+          </div>
+          <div class="report-card">
+            <h3 class="report-card-title">Top Services by Bookings</h3>
+            <div id="rpt-top-count"></div>
+          </div>
+        </div>
+        <div class="report-card" style="margin-bottom:16px;">
+          <h3 class="report-card-title">Revenue by Category</h3>
+          <div id="rpt-category"></div>
+        </div>
+
+        <!-- ── Customer Insights ──────────────────── -->
+        <h2 class="report-section-heading">Customer Insights</h2>
+        <div class="report-grid-2" style="margin-bottom:16px;">
+          <div class="report-card">
+            <h3 class="report-card-title">Top Customers by Spend</h3>
+            <div id="rpt-top-customers"></div>
+          </div>
+          <div class="report-card">
+            <h3 class="report-card-title">Order Size Distribution</h3>
+            <div id="rpt-order-size"></div>
+          </div>
+        </div>
+
+      </div>
+
     </main>
   </div>
 
   <div class="admin-toast" id="admin-toast"></div>
+
+  <!-- ============ SERVICE EDIT / ADD MODAL ============ -->
+  <div class="svc-overlay" id="svc-overlay">
+    <div class="svc-modal">
+      <div class="svc-modal-header">
+        <h3 id="svc-modal-title">Edit Service</h3>
+        <button class="svc-close" id="svc-close">✕</button>
+      </div>
+      <div class="svc-modal-body">
+        <div class="svc-form-row">
+          <label>Service Name</label>
+          <input class="svc-input" id="svc-title" type="text" placeholder="e.g. Rica Waxing – Full Arms" />
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Price (₹)</label>
+            <input class="svc-input" id="svc-price" type="number" min="0" />
+          </div>
+          <div>
+            <label>Original Price (₹)</label>
+            <input class="svc-input" id="svc-original-price" type="number" min="0" />
+          </div>
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Category</label>
+            <input class="svc-input" id="svc-category" type="text" placeholder="e.g. Waxing" />
+          </div>
+          <div>
+            <label>Gender</label>
+            <select class="svc-input" id="svc-gender">
+              <option value="women">Women</option>
+              <option value="men">Men</option>
+            </select>
+          </div>
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Duration (min)</label>
+            <input class="svc-input" id="svc-duration" type="number" min="0" />
+          </div>
+          <div>
+            <label>Rating</label>
+            <input class="svc-input" id="svc-rating" type="number" min="1" max="5" step="0.1" />
+          </div>
+        </div>
+        <div class="svc-form-row">
+          <label>Image URL</label>
+          <input class="svc-input" id="svc-image" type="url" placeholder="https://images.unsplash.com/…" />
+        </div>
+        <p class="svc-error" id="svc-error"></p>
+      </div>
+      <div class="svc-modal-footer">
+        <button class="svc-delete-btn" id="svc-delete" style="display:none;">🗑 Delete</button>
+        <button class="svc-cancel-btn" id="svc-cancel">Cancel</button>
+        <button class="svc-save-btn" id="svc-save">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PRODUCT ADD / EDIT MODAL ============ -->
+  <div class="svc-overlay" id="prod-overlay">
+    <div class="svc-modal">
+      <div class="svc-modal-header">
+        <h3 id="prod-modal-title">Add Product</h3>
+        <button class="svc-close" id="prod-close">✕</button>
+      </div>
+      <div class="svc-modal-body">
+        <div class="svc-form-row">
+          <label>Product Name</label>
+          <input class="svc-input" id="prod-name" type="text" placeholder="e.g. Rica Wax Gold Tin" />
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Brand</label>
+            <input class="svc-input" id="prod-brand" type="text" placeholder="e.g. Rica" />
+          </div>
+          <div>
+            <label>Category</label>
+            <input class="svc-input" id="prod-category" type="text" placeholder="e.g. Wax" />
+          </div>
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Stock Qty</label>
+            <input class="svc-input" id="prod-stock" type="number" min="0" placeholder="0" />
+          </div>
+          <div>
+            <label>Unit</label>
+            <select class="svc-input" id="prod-unit">
+              <option value="pieces">Pieces</option>
+              <option value="bottles">Bottles</option>
+              <option value="tubes">Tubes</option>
+              <option value="ml">ml</option>
+              <option value="g">g</option>
+              <option value="kg">kg</option>
+              <option value="liters">Liters</option>
+            </select>
+          </div>
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Cost Price (₹)</label>
+            <input class="svc-input" id="prod-price" type="number" min="0" placeholder="0" />
+          </div>
+          <div>
+            <label>Reorder Level</label>
+            <input class="svc-input" id="prod-reorder" type="number" min="0" placeholder="5" />
+          </div>
+        </div>
+        <p class="svc-error" id="prod-error"></p>
+      </div>
+      <div class="svc-modal-footer">
+        <button class="svc-delete-btn" id="prod-delete" style="display:none;">🗑 Delete</button>
+        <button class="svc-cancel-btn" id="prod-cancel">Cancel</button>
+        <button class="svc-save-btn" id="prod-save">Add Product</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="/src/admin.js"></script>
 </body>

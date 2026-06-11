@@ -34,6 +34,51 @@ function getServiceImage(service) {
 /* ---------- Procedure Step Icons ---------- */
 const PROCEDURE_ICONS = ['🧴', '💆', '✨', '🌸', '💅', '🧖', '🪮', '💎'];
 
+/* ---------- Ritual Step Images (verified Unsplash IDs) ---------- */
+const _IMG = (id) => `https://images.unsplash.com/photo-${id}?w=800&h=500&fit=crop&auto=format`;
+const RITUAL_STEP_IMAGES = [
+  // waxing / strip / rica
+  [/wax|strip|rica/,                          _IMG('1560750588-73207b1ef5b8')],
+  // massage table / body treatment
+  [/massage|effleurage|tapotement|petrissage|kneading|pressure|decompression/, _IMG('1544161515-4ab6ce6db874')],
+  // oil pour / warm oil / champi
+  [/oil|pour|bhringraj|coconut|champi/,        _IMG('1519690889869-e705e59f72e1')],
+  // face mask / pack / peel / charcoal / mud
+  [/mask|pack|peel|charcoal|mud|vitamin c/,    _IMG('1570172619644-dfd03ed5d881')],
+  // steam / sauna / spa
+  [/steam|extract|spa|cool|soothe|rose/,       _IMG('1540555700478-4be289fbecef')],
+  // hair blow dry / style
+  [/blow|dry|style|finish/,                    _IMG('1562322140-8baeececf3df')],
+  // keratin / flat iron / smoothen
+  [/keratin|iron|sealing|smooth|shampoo|clarif|scalp/, _IMG('1522337360788-8b13dee7a37e')],
+  // nail / gel / polish / mani / pedi / callus
+  [/nail|polish|gel|callus|mani|pedi/,         _IMG('1604654894610-df63bc536371')],
+  // foot soak / detox soak / paraffin / pumice
+  [/soak|detox|foot|paraffin|pumice/,          _IMG('1544161515-4ab6ce6db874')],
+  // threading / brow / eyebrow
+  [/thread|brow|eyebrow|mapping/,              _IMG('1519823551278-64ac92734fb1')],
+  // shave / razor / lather / aftershave / hot towel
+  [/shave|razor|lather|aftershave|balm|towel/, _IMG('1503951914875-452162b0f3f1')],
+  // haircut / cut / trim / fade / taper
+  [/haircut|cut|trim|fade|shape|taper/,        _IMG('1599351431202-1e0f0137899a')],
+  // beard
+  [/beard/,                                    _IMG('1503951914875-452162b0f3f1')],
+  // moisturize / toner / serum / spf / sunscreen / skincare
+  [/moistur|toner|serum|spf|sunscreen|hydrat|cleanse|wash|foam|scrub|exfoliat|aha|walnut/, _IMG('1570172619644-dfd03ed5d881')],
+  // consultation / assessment
+  [/consult|assess|skin type/,                 _IMG('1519823551278-64ac92734fb1')],
+  // shoulder / neck / back
+  [/neck|shoulder|back|trapez|rhomboid/,       _IMG('1544161515-4ab6ce6db874')],
+];
+
+function getRitualStepImage(title) {
+  const t = (title || '').toLowerCase();
+  for (const [pattern, url] of RITUAL_STEP_IMAGES) {
+    if (pattern.test(t)) return url;
+  }
+  return _IMG('1560750588-73207b1ef5b8');
+}
+
 /* ---------- Stars Rendering ---------- */
 function renderStars(rating) {
   const full = Math.floor(rating);
@@ -193,22 +238,31 @@ function openServiceModal(service) {
         ` : ''}
       </div>
 
-      ${service.ritualSteps && service.ritualSteps.length > 0 ? `
-        <div class="ritual-steps">
-          <h3 class="modal-section-title"><span class="icon">✨</span> The Ritual</h3>
-          ${service.ritualSteps
-            .sort((a, b) => a.step - b.step)
-            .map((step) => `
-              <div class="ritual-step">
-                <span class="ritual-step-number">${step.step}</span>
-                <div class="ritual-step-content">
-                  <h4>${step.title}</h4>
-                  <p>${step.desc}</p>
-                </div>
+      ${service.ritualSteps && service.ritualSteps.length > 0 ? (() => {
+        const steps = [...service.ritualSteps].sort((a, b) => a.step - b.step);
+        const slides = steps.map((step, i) => `
+          <div class="ritual-slide${i === 0 ? ' active' : ''}" data-index="${i}">
+            <img class="ritual-slide-img" src="${getRitualStepImage(step.title)}" alt="${step.title}" loading="lazy" />
+            <div class="ritual-slide-content">
+              <span class="ritual-slide-num">${step.step}</span>
+              <h4>${step.title}</h4>
+              <p>${step.desc}</p>
+            </div>
+          </div>`).join('');
+        const dots = steps.map((_, i) => `<button class="ritual-dot${i === 0 ? ' active' : ''}" data-dot="${i}" aria-label="Step ${i + 1}"></button>`).join('');
+        return `
+          <div class="ritual-carousel">
+            <h3 class="modal-section-title"><span class="icon">✨</span> The Ritual</h3>
+            <div class="ritual-carousel-wrap">
+              <button class="ritual-arrow ritual-prev" aria-label="Previous">&#8249;</button>
+              <div class="ritual-track-overflow">
+                <div class="ritual-track">${slides}</div>
               </div>
-            `).join('')}
-        </div>
-      ` : ''}
+              <button class="ritual-arrow ritual-next" aria-label="Next">&#8250;</button>
+            </div>
+            <div class="ritual-dots">${dots}</div>
+          </div>`;
+      })() : ''}
 
       ${service.procedureSteps && service.procedureSteps.length > 0 ? `
         <div class="procedure-steps">
@@ -243,6 +297,34 @@ function openServiceModal(service) {
 
   overlay.classList.add('active');
   document.body.classList.add('modal-open');
+
+  // Ritual carousel
+  const track = body.querySelector('.ritual-track');
+  if (track) {
+    let current = 0;
+    const slides = body.querySelectorAll('.ritual-slide');
+    const dots   = body.querySelectorAll('.ritual-dot');
+    const total  = slides.length;
+
+    function goTo(idx) {
+      current = (idx + total) % total;
+      track.style.transform = `translateX(-${current * 100}%)`;
+      slides.forEach((s, i) => s.classList.toggle('active', i === current));
+      dots.forEach((d, i)   => d.classList.toggle('active', i === current));
+    }
+
+    body.querySelector('.ritual-prev').addEventListener('click', () => goTo(current - 1));
+    body.querySelector('.ritual-next').addEventListener('click', () => goTo(current + 1));
+    dots.forEach((d) => d.addEventListener('click', () => goTo(+d.dataset.dot)));
+
+    // Swipe support
+    let touchX = 0;
+    track.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+    track.addEventListener('touchend',   (e) => {
+      const diff = touchX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 40) goTo(diff > 0 ? current + 1 : current - 1);
+    }, { passive: true });
+  }
 
   // Modal add button
   document.getElementById('modal-add-btn').addEventListener('click', () => {

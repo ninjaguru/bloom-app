@@ -816,45 +816,124 @@ img {
 }
 
 /* Ritual Steps */
-.ritual-steps {
+/* ---- Ritual Carousel ---- */
+.ritual-carousel {
   margin-bottom: var(--space-xl);
 }
 
-.ritual-step {
+.ritual-carousel-wrap {
+  position: relative;
   display: flex;
-  gap: var(--space-md);
-  padding: var(--space-md) 0;
-  border-bottom: 1px solid var(--color-border);
+  align-items: center;
+  gap: 8px;
 }
 
-.ritual-step:last-child {
-  border-bottom: none;
+.ritual-track-overflow {
+  flex: 1;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
 }
 
-.ritual-step-number {
+.ritual-track {
+  display: flex;
+  transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.ritual-slide {
+  min-width: 100%;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+}
+
+.ritual-slide-img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+.ritual-slide-content {
+  padding: 16px 18px 20px;
+  overflow: hidden;
+}
+
+.ritual-slide-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   border-radius: var(--radius-full);
   background: var(--gradient-accent);
-  color: white;
-  font-size: 0.8rem;
+  color: #fff;
+  font-size: 0.78rem;
   font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.ritual-slide-content h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--color-text-primary);
+}
+
+.ritual-slide-content p {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.ritual-arrow {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.18s, border-color 0.18s;
+  padding: 0;
+}
+.ritual-arrow:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
 }
 
-.ritual-step-content h4 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin-bottom: 4px;
+.ritual-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
 }
 
-.ritual-step-content p {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
+.ritual-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, width 0.2s;
+}
+.ritual-dot.active {
+  background: var(--color-accent-primary);
+  width: 20px;
 }
 
 /* Procedure Steps */
