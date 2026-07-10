@@ -1,6 +1,8 @@
 import { checkout } from './cart.js';
+import { db } from './firebase.js';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 
-const TIME_SLOTS = [
+const FALLBACK_SLOTS = [
   '8:00 – 10:00 AM',
   '10:00 AM – 12:00 PM',
   '12:00 – 2:00 PM',
@@ -8,6 +10,22 @@ const TIME_SLOTS = [
   '4:00 – 6:00 PM',
   '6:00 – 8:00 PM',
 ];
+
+const WHATSAPP_NUMBER = '919916953366';
+
+async function fetchActiveSlots() {
+  try {
+    const snap = await getDocs(
+      query(collection(db, 'slots'), where('active', '==', true), orderBy('order', 'asc'))
+    );
+    if (!snap.empty) {
+      return snap.docs.map((d) => d.data().timeSlot);
+    }
+  } catch {
+    // fall through to defaults
+  }
+  return FALLBACK_SLOTS;
+}
 
 function getAvailableDates() {
   const dates = [];
@@ -30,6 +48,7 @@ function getAvailableDates() {
 let selectedDate = null;
 let selectedSlot = null;
 let _callbacks = {};
+let _cartState = null;
 
 export function setupBookingListeners({ closeCart, showToast }) {
   _callbacks = { closeCart, showToast };
@@ -44,9 +63,10 @@ export function setupBookingListeners({ closeCart, showToast }) {
   document.getElementById('booking-confirm-btn').addEventListener('click', handleConfirm);
 }
 
-export function openBookingModal(cartState) {
+export async function openBookingModal(cartState) {
   selectedDate = null;
   selectedSlot = null;
+  _cartState = cartState;
 
   document.getElementById('booking-summary').textContent =
     `${cartState.totalItems} service${cartState.totalItems !== 1 ? 's' : ''} · ₹${cartState.total.toLocaleString('en-IN')}`;
@@ -67,9 +87,10 @@ export function openBookingModal(cartState) {
     });
   });
 
-  // Render time slots
+  // Fetch + render time slots
+  const slots = await fetchActiveSlots();
   const slotGrid = document.getElementById('booking-slots');
-  slotGrid.innerHTML = TIME_SLOTS.map((slot) => `
+  slotGrid.innerHTML = slots.map((slot) => `
     <button class="slot-btn" data-slot="${slot}">${slot}</button>
   `).join('');
   slotGrid.querySelectorAll('.slot-btn').forEach((btn) => {
@@ -81,7 +102,7 @@ export function openBookingModal(cartState) {
   });
 
   // Reset form
-  ['booking-name', 'booking-phone', 'booking-address'].forEach((id) => {
+  ['booking-name', 'booking-phone', 'booking-apartment', 'booking-flat'].forEach((id) => {
     document.getElementById(id).value = '';
   });
   document.getElementById('booking-error').textContent = '';
@@ -95,17 +116,47 @@ export function closeBookingModal() {
   document.body.classList.remove('modal-open');
 }
 
+function buildWhatsAppMessage({ name, phone, apartment, flat, date, slot, cartState }) {
+  const serviceLines = cartState.items
+    .map((item) => `  • ${item.service.title} (×${item.quantity}) — ₹${item.lineTotal.toLocaleString('en-IN')}`)
+    .join('\n');
+
+  const lines = [
+    '🌿 *New Bloom Salon Booking*',
+    '',
+    `*Customer:* ${name}`,
+    `*Phone:* ${phone}`,
+    `*Address:* ${flat}, ${apartment}`,
+    '',
+    `*Date:* ${date}`,
+    `*Time:* ${slot}`,
+    '',
+    '*Services:*',
+    serviceLines,
+  ];
+
+  if (cartState.couponCode && cartState.discountAmount > 0) {
+    lines.push(`Coupon (${cartState.couponCode}): -₹${cartState.discountAmount.toLocaleString('en-IN')}`);
+  }
+
+  lines.push(`*Total: ₹${cartState.total.toLocaleString('en-IN')}*`);
+
+  return lines.join('\n');
+}
+
 async function handleConfirm() {
-  const name    = document.getElementById('booking-name').value.trim();
-  const phone   = document.getElementById('booking-phone').value.trim();
-  const address = document.getElementById('booking-address').value.trim();
-  const errorEl = document.getElementById('booking-error');
+  const name      = document.getElementById('booking-name').value.trim();
+  const phone     = document.getElementById('booking-phone').value.trim();
+  const apartment = document.getElementById('booking-apartment').value.trim();
+  const flat      = document.getElementById('booking-flat').value.trim();
+  const errorEl   = document.getElementById('booking-error');
 
   if (!selectedDate)                       { errorEl.textContent = 'Select a date.'; return; }
   if (!selectedSlot)                       { errorEl.textContent = 'Select a time slot.'; return; }
   if (!name)                               { errorEl.textContent = 'Enter your name.'; return; }
   if (!/^[6-9]\d{9}$/.test(phone))         { errorEl.textContent = 'Enter valid 10-digit mobile number.'; return; }
-  if (!address)                            { errorEl.textContent = 'Enter your address.'; return; }
+  if (!apartment)                          { errorEl.textContent = 'Enter apartment / society name.'; return; }
+  if (!flat)                               { errorEl.textContent = 'Enter flat / door number.'; return; }
 
   errorEl.textContent = '';
   const btn = document.getElementById('booking-confirm-btn');
@@ -113,16 +164,28 @@ async function handleConfirm() {
   btn.innerHTML = '<span>Confirming…</span>';
 
   try {
+    const address = `${flat}, ${apartment}`;
     const bookingDetails = {
-      customer:    { name, phone, address },
+      customer:    { name, phone, address, apartment, flat },
       appointment: { date: selectedDate, timeSlot: selectedSlot },
     };
-    const orderId = await checkout(bookingDetails);
-    if (orderId) {
-      closeBookingModal();
-      _callbacks.closeCart?.();
-      _callbacks.showToast?.(`Booked for ${selectedDate} · ${selectedSlot}`);
-    }
+    await checkout(bookingDetails);
+
+    // Open WhatsApp
+    const message = buildWhatsAppMessage({
+      name, phone, apartment, flat,
+      date: selectedDate,
+      slot: selectedSlot,
+      cartState: _cartState,
+    });
+    window.open(
+      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
+      '_blank'
+    );
+
+    closeBookingModal();
+    _callbacks.closeCart?.();
+    _callbacks.showToast?.(`Booking confirmed for ${selectedDate} · ${selectedSlot}`);
   } catch (err) {
     console.error('Booking error:', err);
     errorEl.textContent = 'Booking failed. Please try again.';

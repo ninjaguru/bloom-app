@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Maison Salon — Premium At-Home Beauty & Grooming</title>
+  <title>Bloom Salon — Premium At-Home Beauty & Grooming</title>
   <meta name="description" content="Book premium at-home salon services. Korean waxing, facials, massages, grooming and more — delivered to your doorstep by expert beauticians." />
-  <meta name="theme-color" content="#1a0a2e" />
+  <meta name="theme-color" content="#061510" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -18,7 +18,7 @@
     <div class="header-inner">
       <div class="logo" id="logo">
         <span class="logo-icon">✿</span>
-        <span class="logo-text">Maison<span class="logo-accent">Salon</span></span>
+        <span class="logo-text">Bloom<span class="logo-accent">Salon</span></span>
       </div>
       <nav class="header-nav">
         <button class="cart-toggle" id="cart-toggle" aria-label="Open cart">
@@ -80,25 +80,6 @@
     </div>
   </section>
 
-  <!-- ============ DISCOUNT BANNER ============ -->
-  <section class="discount-banner" id="discount-banner">
-    <div class="container">
-      <div class="banner-content">
-        <div class="banner-icon">🎁</div>
-        <div class="banner-text">
-          <h3>Bundle & Save up to 20%</h3>
-          <p>Add more services to your cart for bigger discounts!</p>
-        </div>
-        <div class="discount-tiers">
-          <span class="tier">2+ items: <strong>5% off</strong></span>
-          <span class="tier">3+ items: <strong>10% off</strong></span>
-          <span class="tier">4+ items: <strong>15% off</strong></span>
-          <span class="tier">5+ items: <strong>20% off</strong></span>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- ============ SERVICE DETAIL MODAL ============ -->
   <div class="modal-overlay" id="modal-overlay">
     <div class="modal" id="service-modal">
@@ -125,6 +106,11 @@
       <p class="cart-empty-sub">Browse services and add them to your cart</p>
     </div>
     <div class="cart-footer" id="cart-footer">
+      <div class="coupon-row" id="coupon-row">
+        <input class="coupon-input" id="coupon-input" type="text" placeholder="Coupon code" autocomplete="off" maxlength="20" />
+        <button class="coupon-apply-btn" id="coupon-apply-btn">Apply</button>
+      </div>
+      <p class="coupon-status" id="coupon-status"></p>
       <div class="cart-discount-info" id="cart-discount-info"></div>
       <div class="cart-summary">
         <div class="cart-row">
@@ -173,7 +159,41 @@
           <div class="booking-form">
             <input class="booking-input" id="booking-name" type="text" placeholder="Full Name" autocomplete="name" />
             <input class="booking-input" id="booking-phone" type="tel" placeholder="Mobile Number (10 digits)" maxlength="10" autocomplete="tel" />
-            <textarea class="booking-input booking-textarea" id="booking-address" placeholder="Flat No., Street, Area, Bangalore" rows="3"></textarea>
+            <input class="booking-input" id="booking-apartment" type="text" list="apartment-list"
+              placeholder="Apartment / Society name" autocomplete="off" />
+            <datalist id="apartment-list">
+              <option value="Adarsh Palm Retreat"></option>
+              <option value="Adarsh Palm Meadows"></option>
+              <option value="Brigade Cosmopolis"></option>
+              <option value="Brigade Orchards"></option>
+              <option value="Brigade Gateway"></option>
+              <option value="Godrej Reflections"></option>
+              <option value="Godrej Splendour"></option>
+              <option value="Prestige Shantiniketan"></option>
+              <option value="Prestige Lakeside Habitat"></option>
+              <option value="Prestige White Meadows"></option>
+              <option value="Sobha Dream Acres"></option>
+              <option value="Sobha Rajvilas"></option>
+              <option value="Salarpuria Greenage"></option>
+              <option value="Salarpuria Sattva Misty Charm"></option>
+              <option value="Embassy Springs"></option>
+              <option value="Embassy Grove"></option>
+              <option value="Purva Fountainhead"></option>
+              <option value="Purva Skywood"></option>
+              <option value="Nitesh Caesars Palace"></option>
+              <option value="RMZ Latitude"></option>
+              <option value="Vaishnavi Terraces"></option>
+              <option value="Mantri Espana"></option>
+              <option value="Mantri Webcity"></option>
+              <option value="Mapsko Casabella"></option>
+              <option value="DLF The Magnolias"></option>
+              <option value="Concorde Sylvan View"></option>
+              <option value="Mahindra Windchimes"></option>
+              <option value="Tata New Haven"></option>
+              <option value="L&T Raintree Boulevard"></option>
+              <option value="DNR Reflection"></option>
+            </datalist>
+            <input class="booking-input" id="booking-flat" type="text" placeholder="Flat / Door No. (e.g. A-204)" autocomplete="off" />
           </div>
         </div>
         <p class="booking-error" id="booking-error"></p>
@@ -201,7 +221,7 @@
       <div class="footer-content">
         <div class="footer-brand">
           <span class="logo-icon">✿</span>
-          <span class="logo-text">Maison<span class="logo-accent">Salon</span></span>
+          <span class="logo-text">Bloom<span class="logo-accent">Salon</span></span>
           <p class="footer-tagline">Premium at-home beauty experiences</p>
         </div>
         <div class="footer-links">
@@ -210,7 +230,7 @@
           <a href="#">Careers</a>
           <a href="#">Contact</a>
         </div>
-        <p class="footer-copy">&copy; 2026 MaisonSalon. All rights reserved.</p>
+        <p class="footer-copy">&copy; 2026 BloomSalon. All rights reserved.</p>
       </div>
     </div>
   </footer>

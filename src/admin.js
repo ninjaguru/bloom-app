@@ -13,6 +13,8 @@ import {
   deleteDoc,
   orderBy,
   query,
+  where,
+  Timestamp,
 } from 'firebase/firestore';
 
 /* ================================================================
@@ -71,18 +73,24 @@ document.getElementById('signout-btn').addEventListener('click', () => signOut(a
 let allOrders   = [];
 let allServices = [];
 let allProducts = [];
+let allSlots    = [];
+let allCoupons  = [];
 
 async function loadAllData() {
   try {
-    const [ordersSnap, servicesSnap, productsSnap] = await Promise.all([
+    const [ordersSnap, servicesSnap, productsSnap, slotsSnap, couponsSnap] = await Promise.all([
       getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'))),
       getDocs(collection(db, 'services')),
       getDocs(collection(db, 'products')),
+      getDocs(query(collection(db, 'slots'), orderBy('order', 'asc'))),
+      getDocs(collection(db, 'coupons')),
     ]);
 
-    allOrders   = ordersSnap.docs.map((d)  => ({ id: d.id, ...d.data() }));
-    allServices = servicesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    allProducts = productsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    allOrders   = ordersSnap.docs.map((d)   => ({ id: d.id, ...d.data() }));
+    allServices = servicesSnap.docs.map((d)  => ({ id: d.id, ...d.data() }));
+    allProducts = productsSnap.docs.map((d)  => ({ id: d.id, ...d.data() }));
+    allSlots    = slotsSnap.docs.map((d)    => ({ id: d.id, ...d.data() }));
+    allCoupons  = couponsSnap.docs.map((d)  => ({ id: d.id, ...d.data() }));
 
     renderKPIs(allOrders);
     renderBookingsTable(allOrders);
@@ -91,6 +99,8 @@ async function loadAllData() {
     renderProductsTab(allProducts);
     renderStaffReport(allOrders);
     renderReportsTab(allOrders);
+    renderSlotsTab(allSlots);
+    renderDiscountsTab(allCoupons);
   } catch (err) {
     console.error('Data load failed:', err);
     showToast('Failed to load data. Check Firestore rules.');
@@ -879,6 +889,294 @@ document.getElementById('prod-delete').addEventListener('click', async () => {
   } catch (err) {
     console.error(err);
     document.getElementById('prod-error').textContent = 'Delete failed.';
+    btn.disabled    = false;
+    btn.textContent = '🗑 Delete';
+  }
+});
+
+/* ================================================================
+   DISCOUNTS / COUPONS TAB
+   ================================================================ */
+function renderDiscountsTab(coupons) {
+  const tbody = document.getElementById('coupons-tbody');
+  if (!coupons.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="table-empty"><p>No coupons yet. Create your first one.</p></div></td></tr>`;
+    return;
+  }
+
+  const sorted = [...coupons].sort((a, b) => {
+    const ta = a.createdAt?.toDate?.() || new Date(0);
+    const tb = b.createdAt?.toDate?.() || new Date(0);
+    return tb - ta;
+  });
+
+  tbody.innerHTML = sorted.map((c) => {
+    const activeBadge = c.active !== false
+      ? `<span class="status-badge status-completed">Active</span>`
+      : `<span class="status-badge status-cancelled">Inactive</span>`;
+    const valueLabel = c.type === 'percent' ? `${c.value}%` : `₹${(c.value || 0).toLocaleString('en-IN')}`;
+    const usageLabel = `${c.usedCount || 0} / ${c.maxUses ?? '∞'}`;
+    const minOrder   = c.minOrderValue ? `₹${c.minOrderValue.toLocaleString('en-IN')}` : '—';
+    const expiry     = c.expiresAt?.toDate
+      ? c.expiresAt.toDate().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+      : '—';
+
+    return `
+      <tr>
+        <td style="font-weight:700;font-size:0.95rem;letter-spacing:1px;color:var(--color-gold)">${c.code || '—'}</td>
+        <td><span class="service-tag">${c.type === 'percent' ? '% Percent' : '₹ Flat'}</span></td>
+        <td style="font-weight:700">${valueLabel}</td>
+        <td style="color:var(--color-text-muted)">${minOrder}</td>
+        <td style="color:var(--color-text-secondary)">${usageLabel}</td>
+        <td style="color:var(--color-text-muted);font-size:0.82rem">${expiry}</td>
+        <td>${activeBadge}</td>
+        <td><button class="action-btn edit-svc-btn coupon-edit-btn" data-coupon-id="${c.id}">✎ Edit</button></td>
+      </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.coupon-edit-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const coupon = allCoupons.find((c) => c.id === btn.dataset.couponId);
+      if (coupon) openCouponModal(coupon);
+    });
+  });
+}
+
+/* ================================================================
+   COUPON CRUD MODAL
+   ================================================================ */
+let _editingCouponId = null;
+
+function openCouponModal(coupon) {
+  _editingCouponId = coupon ? coupon.id : null;
+  const isEdit = !!coupon;
+
+  document.getElementById('coupon-modal-title').textContent = isEdit ? 'Edit Coupon' : 'Create Coupon';
+  document.getElementById('coupon-code').value       = coupon?.code      || '';
+  document.getElementById('coupon-type').value       = coupon?.type      || 'percent';
+  document.getElementById('coupon-value').value      = coupon?.value     ?? '';
+  document.getElementById('coupon-min-order').value  = coupon?.minOrderValue ?? '';
+  document.getElementById('coupon-max-uses').value   = coupon?.maxUses   ?? '';
+  document.getElementById('coupon-active').value     = String(coupon?.active ?? true);
+
+  const expiry = coupon?.expiresAt?.toDate ? coupon.expiresAt.toDate() : null;
+  document.getElementById('coupon-expiry').value = expiry
+    ? expiry.toISOString().split('T')[0]
+    : '';
+
+  document.getElementById('coupon-error').textContent = '';
+  document.getElementById('coupon-delete').style.display = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('coupon-save').textContent     = isEdit ? 'Save Changes' : 'Create Coupon';
+  document.getElementById('coupon-overlay').classList.add('open');
+}
+
+function closeCouponModal() {
+  document.getElementById('coupon-overlay').classList.remove('open');
+  _editingCouponId = null;
+}
+
+document.getElementById('add-coupon-btn').addEventListener('click', () => openCouponModal(null));
+document.getElementById('coupon-close').addEventListener('click', closeCouponModal);
+document.getElementById('coupon-cancel').addEventListener('click', closeCouponModal);
+document.getElementById('coupon-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('coupon-overlay')) closeCouponModal();
+});
+
+document.getElementById('coupon-save').addEventListener('click', async () => {
+  const code         = document.getElementById('coupon-code').value.trim().toUpperCase();
+  const type         = document.getElementById('coupon-type').value;
+  const value        = parseFloat(document.getElementById('coupon-value').value);
+  const minOrderValue = parseFloat(document.getElementById('coupon-min-order').value) || 0;
+  const maxUses      = parseInt(document.getElementById('coupon-max-uses').value, 10) || null;
+  const active       = document.getElementById('coupon-active').value === 'true';
+  const expiryVal    = document.getElementById('coupon-expiry').value;
+  const errorEl      = document.getElementById('coupon-error');
+  const saveBtn      = document.getElementById('coupon-save');
+
+  if (!code)             { errorEl.textContent = 'Coupon code is required.'; return; }
+  if (isNaN(value) || value <= 0) { errorEl.textContent = 'Enter a valid discount value.'; return; }
+  if (type === 'percent' && value > 100) { errorEl.textContent = 'Percentage cannot exceed 100.'; return; }
+
+  const data = {
+    code,
+    type,
+    value,
+    minOrderValue,
+    maxUses,
+    active,
+    expiresAt: expiryVal ? Timestamp.fromDate(new Date(expiryVal + 'T23:59:59')) : null,
+  };
+
+  saveBtn.disabled    = true;
+  const origText      = saveBtn.textContent;
+  saveBtn.textContent = 'Saving…';
+  errorEl.textContent = '';
+
+  try {
+    if (_editingCouponId) {
+      await updateDoc(doc(db, 'coupons', _editingCouponId), data);
+      const idx = allCoupons.findIndex((c) => c.id === _editingCouponId);
+      if (idx !== -1) Object.assign(allCoupons[idx], data);
+      showToast('Coupon updated');
+    } else {
+      const newData = { ...data, usedCount: 0, createdAt: Timestamp.now() };
+      const ref = await addDoc(collection(db, 'coupons'), newData);
+      allCoupons.push({ id: ref.id, ...newData });
+      showToast(`Coupon ${code} created`);
+    }
+    closeCouponModal();
+    renderDiscountsTab(allCoupons);
+  } catch (err) {
+    console.error(err);
+    errorEl.textContent = 'Operation failed. Check Firestore permissions.';
+  } finally {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = origText;
+  }
+});
+
+document.getElementById('coupon-delete').addEventListener('click', async () => {
+  if (!_editingCouponId) return;
+  const coupon = allCoupons.find((c) => c.id === _editingCouponId);
+  if (!confirm(`Delete coupon "${coupon?.code}"? This cannot be undone.`)) return;
+
+  const btn = document.getElementById('coupon-delete');
+  btn.disabled    = true;
+  btn.textContent = 'Deleting…';
+
+  try {
+    await deleteDoc(doc(db, 'coupons', _editingCouponId));
+    allCoupons = allCoupons.filter((c) => c.id !== _editingCouponId);
+    closeCouponModal();
+    renderDiscountsTab(allCoupons);
+    showToast('Coupon deleted');
+  } catch (err) {
+    console.error(err);
+    document.getElementById('coupon-error').textContent = 'Delete failed.';
+    btn.disabled    = false;
+    btn.textContent = '🗑 Delete';
+  }
+});
+
+/* ================================================================
+   SLOTS TAB
+   ================================================================ */
+function renderSlotsTab(slots) {
+  const tbody = document.getElementById('slots-tbody');
+  if (!slots.length) {
+    tbody.innerHTML = `<tr><td colspan="4"><div class="table-empty"><p>No slots yet. Add your first time slot.</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = slots.map((slot, i) => {
+    const activeBadge = slot.active !== false
+      ? `<span class="status-badge status-completed">Active</span>`
+      : `<span class="status-badge status-cancelled">Inactive</span>`;
+    return `
+      <tr>
+        <td style="color:var(--color-text-muted);font-size:0.82rem">${slot.order ?? i + 1}</td>
+        <td style="font-weight:600">${slot.timeSlot || '—'}</td>
+        <td>${activeBadge}</td>
+        <td><button class="action-btn edit-svc-btn slot-edit-btn" data-slot-id="${slot.id}">✎ Edit</button></td>
+      </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.slot-edit-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const slot = allSlots.find((s) => s.id === btn.dataset.slotId);
+      if (slot) openSlotModal(slot);
+    });
+  });
+}
+
+/* ================================================================
+   SLOT CRUD MODAL
+   ================================================================ */
+let _editingSlotId = null;
+
+function openSlotModal(slot) {
+  _editingSlotId = slot ? slot.id : null;
+  const isEdit   = !!slot;
+
+  document.getElementById('slot-modal-title').textContent     = isEdit ? 'Edit Slot' : 'Add Slot';
+  document.getElementById('slot-label').value                 = slot?.timeSlot ?? '';
+  document.getElementById('slot-order').value                 = slot?.order    ?? (allSlots.length + 1);
+  document.getElementById('slot-active').value                = String(slot?.active ?? true);
+  document.getElementById('slot-error').textContent           = '';
+  document.getElementById('slot-delete').style.display        = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('slot-save').textContent            = isEdit ? 'Save Changes' : 'Add Slot';
+  document.getElementById('slot-overlay').classList.add('open');
+}
+
+function closeSlotModal() {
+  document.getElementById('slot-overlay').classList.remove('open');
+  _editingSlotId = null;
+}
+
+document.getElementById('add-slot-btn').addEventListener('click', () => openSlotModal(null));
+document.getElementById('slot-close').addEventListener('click', closeSlotModal);
+document.getElementById('slot-cancel').addEventListener('click', closeSlotModal);
+document.getElementById('slot-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('slot-overlay')) closeSlotModal();
+});
+
+document.getElementById('slot-save').addEventListener('click', async () => {
+  const timeSlot = document.getElementById('slot-label').value.trim();
+  const order    = parseInt(document.getElementById('slot-order').value, 10) || 1;
+  const active   = document.getElementById('slot-active').value === 'true';
+  const errorEl  = document.getElementById('slot-error');
+  const saveBtn  = document.getElementById('slot-save');
+
+  if (!timeSlot) { errorEl.textContent = 'Time slot label is required.'; return; }
+
+  saveBtn.disabled    = true;
+  const origText      = saveBtn.textContent;
+  saveBtn.textContent = 'Saving…';
+  errorEl.textContent = '';
+
+  const data = { timeSlot, order, active };
+
+  try {
+    if (_editingSlotId) {
+      await updateDoc(doc(db, 'slots', _editingSlotId), data);
+      const idx = allSlots.findIndex((s) => s.id === _editingSlotId);
+      if (idx !== -1) Object.assign(allSlots[idx], data);
+      showToast('Slot updated');
+    } else {
+      const ref = await addDoc(collection(db, 'slots'), data);
+      allSlots.push({ id: ref.id, ...data });
+      showToast('Slot added');
+    }
+    allSlots.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+    closeSlotModal();
+    renderSlotsTab(allSlots);
+  } catch (err) {
+    console.error(err);
+    errorEl.textContent = 'Operation failed. Check Firestore permissions.';
+  } finally {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = origText;
+  }
+});
+
+document.getElementById('slot-delete').addEventListener('click', async () => {
+  if (!_editingSlotId) return;
+  const slot = allSlots.find((s) => s.id === _editingSlotId);
+  if (!confirm(`Delete slot "${slot?.timeSlot}"? This cannot be undone.`)) return;
+
+  const btn = document.getElementById('slot-delete');
+  btn.disabled    = true;
+  btn.textContent = 'Deleting…';
+
+  try {
+    await deleteDoc(doc(db, 'slots', _editingSlotId));
+    allSlots = allSlots.filter((s) => s.id !== _editingSlotId);
+    closeSlotModal();
+    renderSlotsTab(allSlots);
+    showToast('Slot deleted');
+  } catch (err) {
+    console.error(err);
+    document.getElementById('slot-error').textContent = 'Delete failed.';
     btn.disabled    = false;
     btn.textContent = '🗑 Delete';
   }

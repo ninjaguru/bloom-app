@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin — Maison Salon</title>
+  <title>Admin — Bloom Salon</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,13 +17,13 @@
     <div class="login-card">
       <div class="login-logo">
         <span class="logo-icon">✿</span>
-        <h1>Maison<span>Salon</span></h1>
+        <h1>Bloom<span>Salon</span></h1>
         <span class="admin-badge">Admin Portal</span>
       </div>
       <form class="login-form" id="login-form" novalidate>
         <div class="form-group">
           <label for="admin-email">Email</label>
-          <input class="form-input" id="admin-email" type="email" placeholder="admin@maison.com" autocomplete="email" required />
+          <input class="form-input" id="admin-email" type="email" placeholder="admin@bloom.com" autocomplete="email" required />
         </div>
         <div class="form-group">
           <label for="admin-password">Password</label>
@@ -41,7 +41,7 @@
     <header class="admin-header">
       <div class="admin-header-left">
         <span class="logo-icon">✿</span>
-        Maison<span>Salon</span>
+        Bloom<span>Salon</span>
         <span class="admin-badge-sm">Admin</span>
       </div>
       <div style="display:flex;align-items:center;gap:12px;">
@@ -77,6 +77,8 @@
         <button class="tab-btn active" data-tab="bookings">📋 Bookings</button>
         <button class="tab-btn" data-tab="sales">📈 Sales</button>
         <button class="tab-btn" data-tab="services">🛎 Services</button>
+        <button class="tab-btn" data-tab="slots">🕐 Slots</button>
+        <button class="tab-btn" data-tab="discounts">🎟 Discounts</button>
         <button class="tab-btn" data-tab="inventory">🗂 Inventory</button>
         <button class="tab-btn" data-tab="staff">👥 Staff</button>
         <button class="tab-btn" data-tab="reports">📊 Reports</button>
@@ -180,6 +182,62 @@
               </tr>
             </thead>
             <tbody id="inv-tbody">
+              <tr><td colspan="8"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== TAB: SLOTS ===== -->
+      <div class="tab-panel" id="tab-slots">
+        <div class="section-header">
+          <h2 class="section-title">Booking Time Slots</h2>
+          <button class="refresh-btn add-svc-btn" id="add-slot-btn">+ Add Slot</button>
+        </div>
+        <p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:16px;">
+          These slots appear in the customer booking form. Only active slots are shown.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40px;">#</th>
+                <th>Time Slot</th>
+                <th>Status</th>
+                <th>Edit</th>
+              </tr>
+            </thead>
+            <tbody id="slots-tbody">
+              <tr><td colspan="4"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== TAB: DISCOUNTS ===== -->
+      <div class="tab-panel" id="tab-discounts">
+        <div class="section-header">
+          <h2 class="section-title">Coupon Codes</h2>
+          <button class="refresh-btn add-svc-btn" id="add-coupon-btn">+ Create Coupon</button>
+        </div>
+        <p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:16px;">
+          Customers enter these codes at checkout. Supports % and flat ₹ discounts.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Type</th>
+                <th>Value</th>
+                <th>Min Order</th>
+                <th>Used / Max</th>
+                <th>Expires</th>
+                <th>Status</th>
+                <th>Edit</th>
+              </tr>
+            </thead>
+            <tbody id="coupons-tbody">
               <tr><td colspan="8"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
             </tbody>
           </table>
@@ -452,6 +510,97 @@
         <button class="svc-delete-btn" id="prod-delete" style="display:none;">🗑 Delete</button>
         <button class="svc-cancel-btn" id="prod-cancel">Cancel</button>
         <button class="svc-save-btn" id="prod-save">Add Product</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ COUPON ADD / EDIT MODAL ============ -->
+  <div class="svc-overlay" id="coupon-overlay">
+    <div class="svc-modal">
+      <div class="svc-modal-header">
+        <h3 id="coupon-modal-title">Create Coupon</h3>
+        <button class="svc-close" id="coupon-close">✕</button>
+      </div>
+      <div class="svc-modal-body">
+        <div class="svc-form-row">
+          <label>Coupon Code</label>
+          <input class="svc-input" id="coupon-code" type="text" placeholder="e.g. BLOOM20" style="text-transform:uppercase" />
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Discount Type</label>
+            <select class="svc-input" id="coupon-type">
+              <option value="percent">Percentage (%)</option>
+              <option value="flat">Flat Amount (₹)</option>
+            </select>
+          </div>
+          <div>
+            <label>Value</label>
+            <input class="svc-input" id="coupon-value" type="number" min="1" placeholder="e.g. 20" />
+          </div>
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Min Order Value (₹)</label>
+            <input class="svc-input" id="coupon-min-order" type="number" min="0" placeholder="0 = no minimum" />
+          </div>
+          <div>
+            <label>Max Uses (blank = unlimited)</label>
+            <input class="svc-input" id="coupon-max-uses" type="number" min="1" placeholder="unlimited" />
+          </div>
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Expiry Date (optional)</label>
+            <input class="svc-input" id="coupon-expiry" type="date" />
+          </div>
+          <div>
+            <label>Status</label>
+            <select class="svc-input" id="coupon-active">
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <p class="svc-error" id="coupon-error"></p>
+      </div>
+      <div class="svc-modal-footer">
+        <button class="svc-delete-btn" id="coupon-delete" style="display:none;">🗑 Delete</button>
+        <button class="svc-cancel-btn" id="coupon-cancel">Cancel</button>
+        <button class="svc-save-btn" id="coupon-save">Create Coupon</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SLOT ADD / EDIT MODAL ============ -->
+  <div class="svc-overlay" id="slot-overlay">
+    <div class="svc-modal">
+      <div class="svc-modal-header">
+        <h3 id="slot-modal-title">Add Slot</h3>
+        <button class="svc-close" id="slot-close">✕</button>
+      </div>
+      <div class="svc-modal-body">
+        <div class="svc-form-row">
+          <label>Time Slot Label</label>
+          <input class="svc-input" id="slot-label" type="text" placeholder="e.g. 10:00 AM – 12:00 PM" />
+        </div>
+        <div class="svc-form-row">
+          <label>Display Order</label>
+          <input class="svc-input" id="slot-order" type="number" min="1" placeholder="1" />
+        </div>
+        <div class="svc-form-row">
+          <label>Status</label>
+          <select class="svc-input" id="slot-active">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+        <p class="svc-error" id="slot-error"></p>
+      </div>
+      <div class="svc-modal-footer">
+        <button class="svc-delete-btn" id="slot-delete" style="display:none;">🗑 Delete</button>
+        <button class="svc-cancel-btn" id="slot-cancel">Cancel</button>
+        <button class="svc-save-btn" id="slot-save">Save Slot</button>
       </div>
     </div>
   </div>

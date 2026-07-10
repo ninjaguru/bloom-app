@@ -5,24 +5,29 @@ import {
   isInCart,
   onCartChange,
   getCartState,
+  validateAndApplyCoupon,
+  clearCoupon,
 } from './cart.js';
 import { openBookingModal } from './booking.js';
 
 /* ---------- Service Card Images ---------- */
+const _px = (id) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop`;
+const _ux = (id) => `https://images.unsplash.com/photo-${id}?w=800&h=500&fit=crop&auto=format`;
+
 const SERVICE_IMAGES = {
-  'Waxing': 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=600&h=400&fit=crop',
-  'Facial': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&h=400&fit=crop',
-  'Hair': 'https://images.unsplash.com/photo-1562322140-8baeececf3df?w=600&h=400&fit=crop',
-  'Massage': 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&h=400&fit=crop',
-  'Manicure & Pedicure': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&h=400&fit=crop',
-  'Nails': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&h=400&fit=crop',
-  'Threading': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=400&fit=crop',
-  'Cleanup': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop',
-  'Beard & Grooming': 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&h=400&fit=crop',
-  'Haircut': 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=600&h=400&fit=crop',
-  'Spa': 'https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=600&h=400&fit=crop',
-  'Body Polish': 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=600&h=400&fit=crop',
-  'default': 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=600&h=400&fit=crop',
+  'Waxing':             _px('6763618'),
+  'Facial':             _ux('1570172619644-dfd03ed5d881'),
+  'Hair':               _px('10028673'),
+  'Massage':            _ux('1544161515-4ab6ce6db874'),
+  'Manicure & Pedicure':_ux('1604654894610-df63bc536371'),
+  'Nails':              _ux('1604654894610-df63bc536371'),
+  'Threading':          _px('6135615'),
+  'Cleanup':            _px('29189893'),
+  'Beard & Grooming':   _ux('1503951914875-452162b0f3f1'),
+  'Haircut':            _ux('1599351431202-1e0f0137899a'),
+  'Spa':                _ux('1540555700478-4be289fbecef'),
+  'Body Polish':        _ux('1544161515-4ab6ce6db874'),
+  'default':            _px('6763618'),
 };
 
 function getServiceImage(service) {
@@ -31,44 +36,26 @@ function getServiceImage(service) {
   return SERVICE_IMAGES[category] || SERVICE_IMAGES['default'];
 }
 
-/* ---------- Procedure Step Icons ---------- */
-const PROCEDURE_ICONS = ['🧴', '💆', '✨', '🌸', '💅', '🧖', '🪮', '💎'];
-
 /* ---------- Ritual Step Images (verified Unsplash IDs) ---------- */
-const _IMG = (id) => `https://images.unsplash.com/photo-${id}?w=800&h=500&fit=crop&auto=format`;
+const _IMG  = (id) => `https://images.unsplash.com/photo-${id}?w=800&h=500&fit=crop&auto=format`;
+const _IMGPX = (id) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop`;
 const RITUAL_STEP_IMAGES = [
-  // waxing / strip / rica
-  [/wax|strip|rica/,                          _IMG('1560750588-73207b1ef5b8')],
-  // massage table / body treatment
+  [/wax|strip|rica/,                           _IMGPX('6763618')],
   [/massage|effleurage|tapotement|petrissage|kneading|pressure|decompression/, _IMG('1544161515-4ab6ce6db874')],
-  // oil pour / warm oil / champi
-  [/oil|pour|bhringraj|coconut|champi/,        _IMG('1519690889869-e705e59f72e1')],
-  // face mask / pack / peel / charcoal / mud
-  [/mask|pack|peel|charcoal|mud|vitamin c/,    _IMG('1570172619644-dfd03ed5d881')],
-  // steam / sauna / spa
-  [/steam|extract|spa|cool|soothe|rose/,       _IMG('1540555700478-4be289fbecef')],
-  // hair blow dry / style
-  [/blow|dry|style|finish/,                    _IMG('1562322140-8baeececf3df')],
-  // keratin / flat iron / smoothen
-  [/keratin|iron|sealing|smooth|shampoo|clarif|scalp/, _IMG('1522337360788-8b13dee7a37e')],
-  // nail / gel / polish / mani / pedi / callus
-  [/nail|polish|gel|callus|mani|pedi/,         _IMG('1604654894610-df63bc536371')],
-  // foot soak / detox soak / paraffin / pumice
-  [/soak|detox|foot|paraffin|pumice/,          _IMG('1544161515-4ab6ce6db874')],
-  // threading / brow / eyebrow
-  [/thread|brow|eyebrow|mapping/,              _IMG('1519823551278-64ac92734fb1')],
-  // shave / razor / lather / aftershave / hot towel
-  [/shave|razor|lather|aftershave|balm|towel/, _IMG('1503951914875-452162b0f3f1')],
-  // haircut / cut / trim / fade / taper
-  [/haircut|cut|trim|fade|shape|taper/,        _IMG('1599351431202-1e0f0137899a')],
-  // beard
-  [/beard/,                                    _IMG('1503951914875-452162b0f3f1')],
-  // moisturize / toner / serum / spf / sunscreen / skincare
-  [/moistur|toner|serum|spf|sunscreen|hydrat|cleanse|wash|foam|scrub|exfoliat|aha|walnut/, _IMG('1570172619644-dfd03ed5d881')],
-  // consultation / assessment
-  [/consult|assess|skin type/,                 _IMG('1519823551278-64ac92734fb1')],
-  // shoulder / neck / back
-  [/neck|shoulder|back|trapez|rhomboid/,       _IMG('1544161515-4ab6ce6db874')],
+  [/oil|pour|bhringraj|coconut|champi/,         _IMG('1519690889869-e705e59f72e1')],
+  [/mask|pack|peel|charcoal|mud|vitamin c/,     _IMG('1570172619644-dfd03ed5d881')],
+  [/steam|extract|spa|cool|soothe|rose/,        _IMG('1540555700478-4be289fbecef')],
+  [/blow|dry|style|finish/,                     _IMGPX('10028673')],
+  [/keratin|iron|sealing|smooth|shampoo|clarif|scalp/, _IMGPX('23349909')],
+  [/nail|polish|gel|callus|mani|pedi/,          _IMG('1604654894610-df63bc536371')],
+  [/soak|detox|foot|paraffin|pumice/,           _IMGPX('4155019')],
+  [/thread|brow|eyebrow|mapping/,               _IMGPX('6135615')],
+  [/shave|razor|lather|aftershave|balm|towel/,  _IMGPX('16553361')],
+  [/haircut|cut|trim|fade|shape|taper/,         _IMG('1599351431202-1e0f0137899a')],
+  [/beard/,                                     _IMG('1503951914875-452162b0f3f1')],
+  [/moistur|toner|serum|spf|sunscreen|hydrat|cleanse|wash|foam|scrub|exfoliat|aha|walnut/, _IMGPX('29189893')],
+  [/consult|assess|skin type/,                  _IMGPX('6135615')],
+  [/neck|shoulder|back|trapez|rhomboid/,        _IMGPX('6560291')],
 ];
 
 function getRitualStepImage(title) {
@@ -223,16 +210,16 @@ function openServiceModal(service) {
       <h2 class="modal-title">${service.title}</h2>
       <div class="modal-meta">
         <div class="modal-meta-item">
-          <span class="icon">⭐</span>
+          <svg class="meta-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           <strong>${service.rating}</strong> (${service.reviewCount} reviews)
         </div>
         <div class="modal-meta-item">
-          <span class="icon">⏱</span>
+          <svg class="meta-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
           <strong>${service.durationMinutes}</strong> minutes
         </div>
         ${discount > 0 ? `
         <div class="modal-meta-item">
-          <span class="icon">🏷</span>
+          <svg class="meta-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
           <strong>${discount}% off</strong>
         </div>
         ` : ''}
@@ -252,7 +239,7 @@ function openServiceModal(service) {
         const dots = steps.map((_, i) => `<button class="ritual-dot${i === 0 ? ' active' : ''}" data-dot="${i}" aria-label="Step ${i + 1}"></button>`).join('');
         return `
           <div class="ritual-carousel">
-            <h3 class="modal-section-title"><span class="icon">✨</span> The Ritual</h3>
+            <h3 class="modal-section-title">The Ritual</h3>
             <div class="ritual-carousel-wrap">
               <button class="ritual-arrow ritual-prev" aria-label="Previous">&#8249;</button>
               <div class="ritual-track-overflow">
@@ -266,14 +253,16 @@ function openServiceModal(service) {
 
       ${service.procedureSteps && service.procedureSteps.length > 0 ? `
         <div class="procedure-steps">
-          <h3 class="modal-section-title"><span class="icon">📋</span> Procedure</h3>
+          <h3 class="modal-section-title">Procedure</h3>
           <div class="procedure-grid">
             ${service.procedureSteps
               .sort((a, b) => a.step - b.step)
-              .map((step, i) => `
+              .map((step) => `
                 <div class="procedure-step">
-                  <span class="procedure-step-num">${step.step}</span>
-                  <div class="procedure-step-icon">${PROCEDURE_ICONS[i % PROCEDURE_ICONS.length]}</div>
+                  <div class="procedure-step-img-wrap">
+                    <img src="${getRitualStepImage(step.title)}" alt="${step.title}" loading="lazy" />
+                    <span class="procedure-step-num">${step.step}</span>
+                  </div>
                   <h4>${step.title}</h4>
                 </div>
               `).join('')}
@@ -408,12 +397,23 @@ export function renderCart(state) {
     </div>
   `).join('');
 
-  // Discount info
+  // Coupon info
   const discountInfo = document.getElementById('cart-discount-info');
-  if (state.discountPercent > 0) {
-    discountInfo.innerHTML = `<span class="discount-badge">🎉 ${state.discountPercent}% Bundle Discount Applied!</span>`;
-  } else if (state.totalItems === 1) {
-    discountInfo.innerHTML = `<span class="discount-badge" style="opacity:0.6">Add 1 more for 5% off</span>`;
+  if (state.couponCode && state.discountAmount > 0) {
+    const label = state.couponType === 'percent'
+      ? `${state.discountPercent}% off`
+      : `₹${state.discountAmount.toLocaleString('en-IN')} off`;
+    discountInfo.innerHTML = `
+      <span class="discount-badge">
+        🎟 ${state.couponCode} — ${label}
+        <button id="remove-coupon-btn" style="margin-left:8px;background:none;border:none;color:inherit;cursor:pointer;font-size:0.85rem;opacity:0.7" title="Remove coupon">✕</button>
+      </span>`;
+    document.getElementById('remove-coupon-btn')?.addEventListener('click', () => {
+      clearCoupon();
+      document.getElementById('coupon-input').value = '';
+      document.getElementById('coupon-status').textContent = '';
+      document.getElementById('coupon-status').className = 'coupon-status';
+    });
   } else {
     discountInfo.innerHTML = '';
   }
@@ -471,6 +471,31 @@ export function setupGlobalListeners() {
   document.getElementById('cart-toggle').addEventListener('click', openCart);
   document.getElementById('cart-close').addEventListener('click', closeCart);
   document.getElementById('cart-overlay').addEventListener('click', closeCart);
+
+  // Coupon Apply
+  document.getElementById('coupon-apply-btn').addEventListener('click', async () => {
+    const input   = document.getElementById('coupon-input');
+    const statusEl = document.getElementById('coupon-status');
+    const applyBtn = document.getElementById('coupon-apply-btn');
+
+    applyBtn.disabled = true;
+    applyBtn.textContent = '…';
+    statusEl.textContent = '';
+    statusEl.className = 'coupon-status';
+
+    const result = await validateAndApplyCoupon(input.value);
+
+    statusEl.textContent = result.message;
+    statusEl.className = `coupon-status ${result.success ? 'success' : 'error'}`;
+    if (result.success) input.value = '';
+
+    applyBtn.disabled = false;
+    applyBtn.textContent = 'Apply';
+  });
+
+  document.getElementById('coupon-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('coupon-apply-btn').click();
+  });
 
   // Checkout → open booking modal
   document.getElementById('checkout-btn').addEventListener('click', () => {

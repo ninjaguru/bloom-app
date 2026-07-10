@@ -3,24 +3,24 @@
    ================================================ */
 
 :root {
-  --color-bg-primary: #0d0a1a;
-  --color-bg-secondary: #140f28;
-  --color-bg-card: rgba(28, 20, 56, 0.65);
+  --color-bg-primary: #061510;
+  --color-bg-secondary: #091a11;
+  --color-bg-card: rgba(8, 28, 17, 0.65);
   --color-surface: rgba(255, 255, 255, 0.04);
   --color-surface-hover: rgba(255, 255, 255, 0.08);
-  --color-accent-primary: #c084fc;
-  --color-accent-secondary: #a855f7;
-  --color-accent-glow: rgba(192, 132, 252, 0.25);
+  --color-accent-primary: #4ade80;
+  --color-accent-secondary: #22c55e;
+  --color-accent-glow: rgba(74, 222, 128, 0.25);
   --color-gold: #f0c674;
   --color-green: #4ade80;
   --color-red: #fb7185;
   --color-yellow: #fbbf24;
-  --color-text-primary: #f1ecff;
-  --color-text-secondary: rgba(241, 236, 255, 0.6);
-  --color-text-muted: rgba(241, 236, 255, 0.35);
-  --color-border: rgba(192, 132, 252, 0.12);
-  --color-border-hover: rgba(192, 132, 252, 0.3);
-  --gradient-accent: linear-gradient(135deg, #c084fc 0%, #a855f7 50%, #7c3aed 100%);
+  --color-text-primary: #f0fff4;
+  --color-text-secondary: rgba(240, 255, 244, 0.65);
+  --color-text-muted: rgba(240, 255, 244, 0.38);
+  --color-border: rgba(74, 222, 128, 0.14);
+  --color-border-hover: rgba(74, 222, 128, 0.35);
+  --gradient-accent: linear-gradient(135deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
   --font-display: 'Outfit', sans-serif;
   --font-body: 'Inter', sans-serif;
   --radius-sm: 8px;
@@ -55,7 +55,7 @@ button { font-family: var(--font-body); cursor: pointer; border: none; backgroun
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: radial-gradient(ellipse at top, rgba(192,132,252,0.08) 0%, transparent 60%),
+  background: radial-gradient(ellipse at top, rgba(74,222,128,0.08) 0%, transparent 60%),
               var(--color-bg-primary);
 }
 
@@ -89,7 +89,7 @@ button { font-family: var(--font-body); cursor: pointer; border: none; backgroun
   margin-top: 6px;
   padding: 3px 12px;
   border-radius: var(--radius-full);
-  background: rgba(192,132,252,0.15);
+  background: rgba(74,222,128,0.12);
   border: 1px solid var(--color-border);
   font-size: 0.7rem;
   font-weight: 600;
@@ -123,7 +123,7 @@ button { font-family: var(--font-body); cursor: pointer; border: none; backgroun
 }
 
 .form-input::placeholder { color: var(--color-text-muted); }
-.form-input:focus { border-color: var(--color-accent-primary); background: rgba(192,132,252,0.05); }
+.form-input:focus { border-color: var(--color-accent-primary); background: rgba(74,222,128,0.05); }
 
 .login-btn {
   margin-top: 8px;
@@ -154,7 +154,7 @@ button { font-family: var(--font-body); cursor: pointer; border: none; backgroun
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(13, 10, 26, 0.9);
+  background: rgba(6, 21, 16, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--color-border);
@@ -180,7 +180,7 @@ button { font-family: var(--font-body); cursor: pointer; border: none; backgroun
 .admin-badge-sm {
   padding: 3px 10px;
   border-radius: var(--radius-full);
-  background: rgba(192,132,252,0.15);
+  background: rgba(74,222,128,0.12);
   border: 1px solid var(--color-border);
   font-size: 0.65rem;
   font-weight: 700;
@@ -291,7 +291,7 @@ table {
 }
 
 thead {
-  background: rgba(192,132,252,0.06);
+  background: rgba(74,222,128,0.06);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -328,7 +328,7 @@ tbody td {
   display: inline-block;
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  background: rgba(192,132,252,0.1);
+  background: rgba(74,222,128,0.08);
   border: 1px solid var(--color-border);
   font-size: 0.72rem;
   color: var(--color-accent-primary);
@@ -361,7 +361,7 @@ tbody td {
   white-space: nowrap;
 }
 
-.status-confirmed  { background: rgba(192,132,252,0.15); color: var(--color-accent-primary); border: 1px solid rgba(192,132,252,0.3); }
+.status-confirmed  { background: rgba(74,222,128,0.12); color: var(--color-accent-primary); border: 1px solid rgba(74,222,128,0.3); }
 .status-completed  { background: rgba(74,222,128,0.12);  color: var(--color-green);          border: 1px solid rgba(74,222,128,0.3); }
 .status-cancelled  { background: rgba(251,113,133,0.12); color: var(--color-red);            border: 1px solid rgba(251,113,133,0.3); }
 

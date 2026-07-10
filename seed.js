@@ -29,7 +29,7 @@ const services = [
     durationMinutes: 70,
     rating: 4.8,
     reviewCount: 4234,
-    imageUrl: 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/6763618/pexels-photo-6763618.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Pre-Wax Prep', desc: 'Skin cleansed with antiseptic pre-wax powder to ensure a clean, dry surface for best wax adhesion' },
@@ -54,7 +54,7 @@ const services = [
     durationMinutes: 90,
     rating: 4.9,
     reviewCount: 2876,
-    imageUrl: 'https://images.unsplash.com/photo-1519415387722-a1c3bbef716c?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/6763120/pexels-photo-6763120.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Full Body Consultation', desc: 'Technician assesses skin sensitivity and selects the appropriate wax grade for each zone' },
@@ -80,7 +80,7 @@ const services = [
     durationMinutes: 40,
     rating: 4.7,
     reviewCount: 6102,
-    imageUrl: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/5240782/pexels-photo-5240782.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Skin Prep', desc: 'Pre-wax powder applied on half legs and underarms to absorb moisture' },
@@ -132,7 +132,7 @@ const services = [
     durationMinutes: 75,
     rating: 4.9,
     reviewCount: 2184,
-    imageUrl: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/29189893/pexels-photo-29189893.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'HydraClean', desc: 'Patented vortex-cleansing tip removes dead skin cells and opens pores while infusing hydrating serums simultaneously' },
@@ -159,7 +159,7 @@ const services = [
     durationMinutes: 30,
     rating: 4.6,
     reviewCount: 7820,
-    imageUrl: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/11179579/pexels-photo-11179579.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Milk Cleanse', desc: 'Vitamin-enriched milk cleanser removes sunscreen, oil, and environmental pollutants' },
@@ -184,7 +184,7 @@ const services = [
     durationMinutes: 45,
     rating: 4.7,
     reviewCount: 5340,
-    imageUrl: 'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/29189920/pexels-photo-29189920.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Deep Cleanse', desc: 'O3+ charcoal cleanser draws out toxins and clears blackheads from the first wash' },
@@ -238,7 +238,7 @@ const services = [
     durationMinutes: 100,
     rating: 4.8,
     reviewCount: 2140,
-    imageUrl: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/4155019/pexels-photo-4155019.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Detox Soak', desc: 'Fizzing detox bath with essential oils removes built-up grime and relaxes tired muscles' },
@@ -265,7 +265,7 @@ const services = [
     durationMinutes: 15,
     rating: 4.5,
     reviewCount: 12450,
-    imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/6135615/pexels-photo-6135615.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Brow Mapping', desc: 'Face shape assessed to determine ideal brow arch, thickness, and tail length' },
@@ -290,7 +290,7 @@ const services = [
     durationMinutes: 25,
     rating: 4.6,
     reviewCount: 8920,
-    imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/8558244/pexels-photo-8558244.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Consultation', desc: 'Discuss desired brow shape and facial hair concerns before beginning' },
@@ -315,7 +315,7 @@ const services = [
     durationMinutes: 60,
     rating: 4.7,
     reviewCount: 4120,
-    imageUrl: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/10028673/pexels-photo-10028673.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Scalp Assessment', desc: 'Hair type and scalp condition evaluated to select the correct spa treatment variant' },
@@ -342,7 +342,7 @@ const services = [
     durationMinutes: 120,
     rating: 4.8,
     reviewCount: 1870,
-    imageUrl: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/23349909/pexels-photo-23349909.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Clarifying Wash', desc: 'Deep-cleansing shampoo opens the hair cuticle for maximum keratin penetration' },
@@ -423,7 +423,7 @@ const services = [
     durationMinutes: 50,
     rating: 4.8,
     reviewCount: 6720,
-    imageUrl: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/27497972/pexels-photo-27497972.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Scalp Wash', desc: 'Deep-cleansing shampoo followed by conditioner to prep hair for cutting and scalp massage' },
@@ -475,7 +475,7 @@ const services = [
     durationMinutes: 30,
     rating: 4.7,
     reviewCount: 5430,
-    imageUrl: 'https://images.unsplash.com/photo-1596178060671-7a80dc8059ea?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/16553361/pexels-photo-16553361.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Hot Towel Prep', desc: 'Steaming hot towel wrapped around face for 5 minutes to open pores and soften coarse stubble' },
@@ -502,7 +502,7 @@ const services = [
     durationMinutes: 60,
     rating: 4.8,
     reviewCount: 4560,
-    imageUrl: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/6560304/pexels-photo-6560304.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Oil Consultation', desc: 'Choose from deep-muscle sesame, relaxing lavender, or energizing eucalyptus oil blend' },
@@ -529,7 +529,7 @@ const services = [
     durationMinutes: 30,
     rating: 4.7,
     reviewCount: 7890,
-    imageUrl: 'https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/6560291/pexels-photo-6560291.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Warm Oil Pour', desc: 'Bhringraj or coconut oil gently warmed and poured along the centre parting of the scalp' },
@@ -554,7 +554,7 @@ const services = [
     durationMinutes: 45,
     rating: 4.7,
     reviewCount: 6120,
-    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/29189893/pexels-photo-29189893.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Charcoal Foam Wash', desc: 'Activated charcoal face wash deep-cleans pores and removes excess sebum accumulated from outdoor exposure' },
@@ -581,7 +581,7 @@ const services = [
     durationMinutes: 30,
     rating: 4.5,
     reviewCount: 8450,
-    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/30890405/pexels-photo-30890405.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Foam Cleanse', desc: 'Oil-control face wash removes dirt, pollutants, and excess oil for a clean base' },
@@ -606,7 +606,7 @@ const services = [
     durationMinutes: 70,
     rating: 4.6,
     reviewCount: 3210,
-    imageUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&h=400&fit=crop',
+    imageUrl: 'https://images.pexels.com/photos/17056222/pexels-photo-17056222.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
     promoVideoUrl: '',
     ritualSteps: [
       { step: 1, title: 'Warm Soak', desc: 'Hands and feet soaked in warm water with antiseptic salts to soften skin and relax muscles' },
