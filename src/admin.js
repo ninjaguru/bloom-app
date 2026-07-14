@@ -116,56 +116,6 @@ async function loadAllData() {
 }
 
 /* ================================================================
-   OTP REQUESTS
-   ================================================================ */
-async function loadPendingOTPs() {
-  const cutoff = new Date(Date.now() - 20 * 60 * 1000); // last 20 min
-  try {
-    const snap = await getDocs(
-      query(
-        collection(db, 'otps'),
-        where('used', '==', false),
-        orderBy('createdAt', 'desc'),
-      )
-    );
-
-    const recent = snap.docs
-      .map((d) => ({ id: d.id, ...d.data() }))
-      .filter((o) => o.createdAt?.toDate?.() > cutoff);
-
-    const panel   = document.getElementById('otp-panel');
-    const listEl  = document.getElementById('otp-list');
-
-    if (!recent.length) { panel.style.display = 'none'; return; }
-
-    panel.style.display = 'block';
-    listEl.innerHTML = recent.map((o) => {
-      const expires = o.expiresAt?.toDate?.();
-      const minsLeft = expires ? Math.max(0, Math.round((expires - new Date()) / 60000)) : 0;
-      const waLink = `https://wa.me/91${o.phone}?text=${encodeURIComponent(`Your Bloom Salon OTP is: ${o.otp}. Valid for ${minsLeft} minutes.`)}`;
-      return `
-        <div style="display:flex;align-items:center;gap:16px;padding:10px 12px;background:var(--color-surface);border-radius:var(--radius-md);border:1px solid var(--color-border);">
-          <div style="flex:1;">
-            <span style="font-weight:700;font-size:0.9rem">+91 ${o.phone}</span>
-            <span style="color:var(--color-text-muted);font-size:0.75rem;margin-left:8px">${minsLeft}m left</span>
-          </div>
-          <span style="font-family:monospace;font-size:1.4rem;font-weight:800;letter-spacing:4px;color:var(--color-accent-primary)">${o.otp}</span>
-          <a href="${waLink}" target="_blank"
-            style="padding:6px 14px;border-radius:var(--radius-md);background:#25D366;color:white;font-size:0.78rem;font-weight:700;text-decoration:none;white-space:nowrap;">
-            Send via WhatsApp
-          </a>
-        </div>`;
-    }).join('');
-  } catch (err) {
-    console.error('OTP load failed:', err);
-  }
-}
-
-loadPendingOTPs();
-document.getElementById('refresh-otps-btn').addEventListener('click', loadPendingOTPs);
-setInterval(loadPendingOTPs, 30000); // auto-refresh every 30s
-
-/* ================================================================
    TAB SWITCHING
    ================================================================ */
 document.querySelectorAll('.tab-btn').forEach((btn) => {

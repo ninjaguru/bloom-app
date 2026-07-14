@@ -203,6 +203,32 @@ img {
   background: rgba(74, 222, 128, 0.06);
 }
 
+.google-signin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 24px;
+  border-radius: var(--radius-md);
+  background: white;
+  color: #3c4043;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1px solid #dadce0;
+  cursor: pointer;
+  transition: box-shadow var(--transition-fast), background var(--transition-fast);
+  font-family: var(--font-body);
+}
+
+.google-signin-btn:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background: #f8f9fa;
+}
+
+.google-signin-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .cart-toggle {
   position: relative;
   padding: var(--space-sm) var(--space-md);
