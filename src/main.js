@@ -1,6 +1,8 @@
 import { subscribeToServices, getCategories } from './services.js';
 import { renderServices, renderCategories, setupGlobalListeners, setupLoginModal, closeCart, showToast } from './ui.js';
 import { setupBookingListeners } from './booking.js';
+import { setupRecommender } from './recommender.js';
+import { addToCart } from './cart.js';
 
 /* ---------- App State ---------- */
 let currentGender = 'women';
@@ -65,6 +67,11 @@ function init() {
   setupGlobalListeners();
   setupLoginModal();
   setupBookingListeners({ closeCart, showToast });
+  setupRecommender(
+    () => currentGender,
+    () => cachedServices,
+    addToCart,
+  );
   setupGenderToggle();
   loadCategories();
   loadServices();

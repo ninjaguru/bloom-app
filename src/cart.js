@@ -155,12 +155,13 @@ export async function checkout(bookingDetails = {}) {
 
   const orderData = {
     items: state.items.map((item) => ({
-      serviceId: item.id,
-      title:     item.service.title,
-      category:  item.service.category || '',
-      price:     item.service.price,
-      quantity:  item.quantity,
-      lineTotal: item.lineTotal,
+      serviceId:       item.id,
+      title:           item.service.title,
+      category:        item.service.category || '',
+      price:           item.service.price,
+      quantity:        item.quantity,
+      lineTotal:       item.lineTotal,
+      durationMinutes: item.service.durationMinutes || 0,
     })),
     totalItems:      state.totalItems,
     subtotal:        state.subtotal,

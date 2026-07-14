@@ -150,7 +150,7 @@ function renderBookingsTable(orders, stylists) {
   const tbody = document.getElementById('orders-tbody');
 
   if (!orders.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="table-empty"><p>No bookings yet.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="table-empty"><p>No bookings yet.</p></div></td></tr>`;
     return;
   }
 
@@ -169,9 +169,15 @@ function renderBookingsTable(orders, stylists) {
       ? order.createdAt.toDate().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
       : '—';
 
+    const assignedStylist = stylists?.find((s) => s.id === order.stylistId);
     const staffName = order.stylistName
       ? `<span style="font-weight:600;font-size:0.82rem;color:var(--color-accent-primary)">${order.stylistName}</span>`
       : `<span style="font-size:0.75rem;color:var(--color-text-muted)">Unassigned</span>`;
+    const payout = calcOrderPayout(order, assignedStylist);
+    const payoutCell = payout !== null
+      ? `<span style="font-weight:700;color:var(--color-gold)">₹${payout.toLocaleString('en-IN')}</span>
+         <span style="font-size:0.7rem;color:var(--color-text-muted);display:block">${Math.round((order.items||[]).reduce((s,i)=>s+(i.durationMinutes||60)*(i.quantity||1),0))} min</span>`
+      : `<span style="color:var(--color-text-muted);font-size:0.75rem">—</span>`;
 
     return `
       <tr data-id="${order.id}">
@@ -191,6 +197,7 @@ function renderBookingsTable(orders, stylists) {
           ${staffName}
           <button class="action-btn assign-btn" style="margin-top:4px;display:block" data-id="${order.id}" data-name="${customer.name || ''}" data-date="${appt.date || ''}" data-slot="${appt.timeSlot || ''}">Assign</button>
         </td>
+        <td>${payoutCell}</td>
         <td><span class="status-badge ${statusCls}">${order.status || 'confirmed'}</span></td>
         <td class="td-actions">
           <button class="action-btn complete" data-id="${order.id}" data-action="completed" ${!isPending ? 'disabled' : ''}>✓ Done</button>
@@ -1122,14 +1129,38 @@ document.getElementById('apt-delete').addEventListener('click', async () => {
 });
 
 /* ================================================================
+   PAYOUT HELPER
+   ================================================================ */
+function calcOrderPayout(order, stylist) {
+  if (!stylist?.hourlyRate) return null;
+  const totalMinutes = (order.items || []).reduce((sum, item) => {
+    return sum + (item.durationMinutes || 60) * (item.quantity || 1);
+  }, 0);
+  return Math.round((totalMinutes / 60) * stylist.hourlyRate);
+}
+
+/* ================================================================
    STAFF MGMT TAB
    ================================================================ */
 function renderStaffMgmtTab(stylists) {
   const tbody = document.getElementById('staff-mgmt-tbody');
   if (!stylists.length) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="table-empty"><p>No staff yet. Add your first member.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="table-empty"><p>No staff yet. Add your first member.</p></div></td></tr>`;
     return;
   }
+
+  // Build earnings map from completed orders
+  const earningsMap = {};
+  const bookingCount = {};
+  allOrders.filter((o) => o.status === 'completed' && o.stylistId).forEach((o) => {
+    const stylist = stylists.find((s) => s.id === o.stylistId);
+    const payout  = calcOrderPayout(o, stylist);
+    if (payout !== null) {
+      earningsMap[o.stylistId]  = (earningsMap[o.stylistId]  || 0) + payout;
+      bookingCount[o.stylistId] = (bookingCount[o.stylistId] || 0) + 1;
+    }
+  });
+
   tbody.innerHTML = stylists.map((s) => {
     const badge = s.active !== false
       ? `<span class="status-badge status-completed">Active</span>`
@@ -1140,11 +1171,17 @@ function renderStaffMgmtTab(stylists) {
       : s.gender === 'other'
         ? `<span class="gender-pill" style="background:rgba(167,139,250,0.12);color:#a78bfa;border:1px solid rgba(167,139,250,0.25)">Other</span>`
         : `<span class="gender-pill women">Female</span>`;
+    const rate     = s.hourlyRate ? `₹${s.hourlyRate}/hr` : '—';
+    const bookings = bookingCount[s.id] || 0;
+    const earnings = earningsMap[s.id]  ? `₹${earningsMap[s.id].toLocaleString('en-IN')}` : '—';
     return `
       <tr>
         <td style="font-weight:600">${s.name || '—'} ${genderPill}</td>
         <td style="color:var(--color-text-muted)">${s.phone || '—'}</td>
         <td>${specs || '—'}</td>
+        <td style="font-weight:600;color:var(--color-gold)">${rate}</td>
+        <td style="color:var(--color-text-secondary)">${bookings}</td>
+        <td style="font-weight:700;color:var(--color-accent-primary)">${earnings}</td>
         <td>${badge}</td>
         <td><button class="action-btn edit-svc-btn staff-edit-btn" data-staff-id="${s.id}">✎ Edit</button></td>
       </tr>`;
@@ -1163,10 +1200,11 @@ function openStaffModal(st) {
   _editingStaffId = st ? st.id : null;
   const isEdit    = !!st;
   document.getElementById('staff-modal-title').textContent = isEdit ? 'Edit Staff' : 'Add Staff';
-  document.getElementById('staff-name').value             = st?.name   || '';
-  document.getElementById('staff-phone').value            = st?.phone  || '';
+  document.getElementById('staff-name').value             = st?.name        || '';
+  document.getElementById('staff-phone').value            = st?.phone       || '';
   document.getElementById('staff-specializations').value  = (st?.specializations || []).join(', ');
-  document.getElementById('staff-gender').value           = st?.gender || 'female';
+  document.getElementById('staff-hourly-rate').value      = st?.hourlyRate  ?? '';
+  document.getElementById('staff-gender').value           = st?.gender      || 'female';
   document.getElementById('staff-active').value           = String(st?.active ?? true);
   document.getElementById('staff-error').textContent      = '';
   document.getElementById('staff-delete').style.display   = isEdit ? 'inline-flex' : 'none';
@@ -1187,14 +1225,15 @@ document.getElementById('staff-overlay').addEventListener('click', (e) => {
 });
 
 document.getElementById('staff-save').addEventListener('click', async () => {
-  const name    = document.getElementById('staff-name').value.trim();
-  const phone   = document.getElementById('staff-phone').value.trim();
-  const specsRaw = document.getElementById('staff-specializations').value;
+  const name         = document.getElementById('staff-name').value.trim();
+  const phone        = document.getElementById('staff-phone').value.trim();
+  const specsRaw     = document.getElementById('staff-specializations').value;
   const specializations = specsRaw ? specsRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
-  const gender  = document.getElementById('staff-gender').value;
-  const active  = document.getElementById('staff-active').value === 'true';
-  const errorEl = document.getElementById('staff-error');
-  const saveBtn = document.getElementById('staff-save');
+  const hourlyRate   = parseFloat(document.getElementById('staff-hourly-rate').value) || 0;
+  const gender       = document.getElementById('staff-gender').value;
+  const active       = document.getElementById('staff-active').value === 'true';
+  const errorEl      = document.getElementById('staff-error');
+  const saveBtn      = document.getElementById('staff-save');
 
   if (!name) { errorEl.textContent = 'Name is required.'; return; }
 
@@ -1203,7 +1242,7 @@ document.getElementById('staff-save').addEventListener('click', async () => {
   saveBtn.textContent = 'Saving…';
   errorEl.textContent = '';
 
-  const data = { name, phone, specializations, gender, active };
+  const data = { name, phone, specializations, hourlyRate, gender, active };
 
   try {
     if (_editingStaffId) {

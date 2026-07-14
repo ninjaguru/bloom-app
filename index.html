@@ -42,6 +42,10 @@
     <div class="hero-content">
       <h1 class="hero-title">Salon Luxury,<br/><span class="hero-accent">At Your Doorstep</span></h1>
       <p class="hero-subtitle">Premium beauty & grooming services delivered to your home by certified professionals</p>
+      <button class="rec-open-hero-btn" id="rec-open-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+        Find My Service
+      </button>
       <div class="gender-toggle" id="gender-toggle">
         <button class="gender-btn active" data-gender="women" id="gender-women">
           <img class="gender-photo" src="https://images.pexels.com/photos/3764119/pexels-photo-3764119.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&fit=crop" alt="Women" /> Women
@@ -186,6 +190,22 @@
             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
           </svg>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ AI RECOMMENDER MODAL ============ -->
+  <div class="modal-overlay rec-overlay" id="rec-overlay">
+    <div class="modal rec-modal">
+      <div class="rec-header">
+        <div>
+          <h2 class="rec-title">Find My Service</h2>
+          <p class="booking-summary">Bloom AI picks the perfect treatment for you</p>
+        </div>
+        <button class="modal-close" id="rec-close" aria-label="Close">✕</button>
+      </div>
+      <div class="rec-content" id="rec-content">
+        <!-- Rendered by JS -->
       </div>
     </div>
   </div>
