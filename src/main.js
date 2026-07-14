@@ -1,5 +1,5 @@
 import { subscribeToServices, getCategories } from './services.js';
-import { renderServices, renderCategories, setupGlobalListeners, closeCart, showToast } from './ui.js';
+import { renderServices, renderCategories, setupGlobalListeners, setupLoginModal, closeCart, showToast } from './ui.js';
 import { setupBookingListeners } from './booking.js';
 
 /* ---------- App State ---------- */
@@ -63,6 +63,7 @@ function setupGenderToggle() {
 /* ---------- Initialize App ---------- */
 function init() {
   setupGlobalListeners();
+  setupLoginModal();
   setupBookingListeners({ closeCart, showToast });
   setupGenderToggle();
   loadCategories();

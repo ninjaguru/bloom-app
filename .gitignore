@@ -26,3 +26,7 @@ npm-debug.log*
 
 # Playwright
 .playwright-mcp/
+vipmp_expire.sh
+vipmp_expire_results.md
+vipmp_lookup.sh
+vipmp_report.md

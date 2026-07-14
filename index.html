@@ -21,6 +21,10 @@
         <span class="logo-text">Bloom<span class="logo-accent">Salon</span></span>
       </div>
       <nav class="header-nav">
+        <button class="login-btn-header" id="login-btn-header" aria-label="Login">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="login-label">Login</span>
+        </button>
         <button class="cart-toggle" id="cart-toggle" aria-label="Open cart">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
@@ -147,54 +151,31 @@
       </div>
       <div class="booking-body">
         <div class="booking-section">
-          <h3 class="booking-section-title">Select Date</h3>
-          <div class="booking-dates" id="booking-dates"></div>
-        </div>
-        <div class="booking-section">
-          <h3 class="booking-section-title">Select Time Slot</h3>
-          <div class="booking-slots" id="booking-slots"></div>
-        </div>
-        <div class="booking-section">
           <h3 class="booking-section-title">Your Details</h3>
           <div class="booking-form">
             <input class="booking-input" id="booking-name" type="text" placeholder="Full Name" autocomplete="name" />
             <input class="booking-input" id="booking-phone" type="tel" placeholder="Mobile Number (10 digits)" maxlength="10" autocomplete="tel" />
+          </div>
+        </div>
+        <div class="booking-section">
+          <h3 class="booking-section-title">Your Address</h3>
+          <div class="booking-form">
             <input class="booking-input" id="booking-apartment" type="text" list="apartment-list"
               placeholder="Apartment / Society name" autocomplete="off" />
             <datalist id="apartment-list">
-              <option value="Adarsh Palm Retreat"></option>
-              <option value="Adarsh Palm Meadows"></option>
-              <option value="Brigade Cosmopolis"></option>
-              <option value="Brigade Orchards"></option>
-              <option value="Brigade Gateway"></option>
-              <option value="Godrej Reflections"></option>
-              <option value="Godrej Splendour"></option>
-              <option value="Prestige Shantiniketan"></option>
-              <option value="Prestige Lakeside Habitat"></option>
-              <option value="Prestige White Meadows"></option>
-              <option value="Sobha Dream Acres"></option>
-              <option value="Sobha Rajvilas"></option>
-              <option value="Salarpuria Greenage"></option>
-              <option value="Salarpuria Sattva Misty Charm"></option>
-              <option value="Embassy Springs"></option>
-              <option value="Embassy Grove"></option>
-              <option value="Purva Fountainhead"></option>
-              <option value="Purva Skywood"></option>
-              <option value="Nitesh Caesars Palace"></option>
-              <option value="RMZ Latitude"></option>
-              <option value="Vaishnavi Terraces"></option>
-              <option value="Mantri Espana"></option>
-              <option value="Mantri Webcity"></option>
-              <option value="Mapsko Casabella"></option>
-              <option value="DLF The Magnolias"></option>
-              <option value="Concorde Sylvan View"></option>
-              <option value="Mahindra Windchimes"></option>
-              <option value="Tata New Haven"></option>
-              <option value="L&T Raintree Boulevard"></option>
-              <option value="DNR Reflection"></option>
+              <!-- populated from Firestore societies collection -->
             </datalist>
             <input class="booking-input" id="booking-flat" type="text" placeholder="Flat / Door No. (e.g. A-204)" autocomplete="off" />
           </div>
+        </div>
+        <div class="booking-section" id="booking-date-section" style="display:none;">
+          <h3 class="booking-section-title">Select Date</h3>
+          <div class="booking-dates" id="booking-dates"></div>
+        </div>
+        <div class="booking-section" id="booking-slot-section" style="display:none;">
+          <h3 class="booking-section-title">Select Time Slot</h3>
+          <div class="booking-slots" id="booking-slots"></div>
+          <p class="slot-hint" id="slot-hint"></p>
         </div>
         <p class="booking-error" id="booking-error"></p>
       </div>
@@ -205,6 +186,62 @@
             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
           </svg>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ LOGIN MODAL ============ -->
+  <div class="booking-overlay" id="login-overlay">
+    <div class="booking-modal" id="login-modal" style="max-width:420px;">
+      <div class="booking-header">
+        <div>
+          <h2>Customer Login</h2>
+          <p class="booking-summary" id="login-subtitle">Enter your mobile number</p>
+        </div>
+        <button class="modal-close" id="login-modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="booking-body">
+
+        <!-- Step 1: Phone -->
+        <div id="login-step-phone">
+          <div class="booking-section">
+            <h3 class="booking-section-title">Your Mobile Number</h3>
+            <div class="booking-form">
+              <input class="booking-input" id="login-phone" type="tel" placeholder="10-digit mobile number" maxlength="10" autocomplete="tel" />
+            </div>
+            <p style="font-size:0.78rem;color:var(--color-text-muted);margin-top:12px;line-height:1.6;">
+              We'll open WhatsApp so you can request an OTP from us. The business will reply with your OTP shortly.
+            </p>
+          </div>
+          <p class="booking-error" id="login-phone-error"></p>
+          <div class="booking-footer" style="position:static;border-radius:var(--radius-md);">
+            <button class="checkout-btn" id="login-request-btn">
+              <span>Request OTP via WhatsApp</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: OTP -->
+        <div id="login-step-otp" style="display:none;">
+          <div class="booking-section">
+            <h3 class="booking-section-title">Enter OTP</h3>
+            <p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:16px;">
+              Check WhatsApp — the business will send your 6-digit OTP shortly.
+            </p>
+            <div class="booking-form">
+              <input class="booking-input" id="login-otp" type="number" placeholder="6-digit OTP"
+                maxlength="6" style="letter-spacing:6px;font-size:1.4rem;text-align:center;font-weight:700;" />
+            </div>
+          </div>
+          <p class="booking-error" id="login-otp-error"></p>
+          <div class="booking-footer" style="position:static;border-radius:var(--radius-md);display:flex;gap:8px;">
+            <button class="checkout-btn" style="background:var(--color-surface);color:var(--color-text-secondary);flex:0 0 auto;width:auto;padding:14px 18px;" id="login-back-btn">Back</button>
+            <button class="checkout-btn" id="login-verify-btn">
+              <span>Verify OTP</span>
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

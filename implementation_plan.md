@@ -1,4 +1,4 @@
-# Maison Salon at Home — At-Home Beauty Services Web App
+# Bloom Salon at Home — At-Home Beauty Services Web App
 
 Build a premium at-home salon services web application using the schema and skill definitions from the project folders, connected to Firebase Firestore.
 

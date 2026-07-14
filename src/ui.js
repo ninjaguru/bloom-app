@@ -9,6 +9,7 @@ import {
   clearCoupon,
 } from './cart.js';
 import { openBookingModal } from './booking.js';
+import { requestOTP, verifyOTP, getSession, logout } from './auth.js';
 
 /* ---------- Service Card Images ---------- */
 const _px = (id) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop`;
@@ -455,6 +456,133 @@ export function showToast(message) {
   setTimeout(() => {
     toast.classList.remove('visible');
   }, 3000);
+}
+
+/* =============================================
+   LOGIN MODAL
+   ============================================= */
+export function updateLoginHeader() {
+  const session = getSession();
+  const btn     = document.getElementById('login-btn-header');
+  const label   = document.getElementById('login-label');
+  if (session?.loggedIn) {
+    const display = session.phone.slice(-4);
+    label.textContent = `+91 ••••${display}`;
+    btn.classList.add('logged-in');
+  } else {
+    label.textContent = 'Login';
+    btn.classList.remove('logged-in');
+  }
+}
+
+export function setupLoginModal() {
+  updateLoginHeader();
+
+  const overlay    = document.getElementById('login-overlay');
+  const stepPhone  = document.getElementById('login-step-phone');
+  const stepOTP    = document.getElementById('login-step-otp');
+
+  function openLogin() {
+    stepPhone.style.display = 'block';
+    stepOTP.style.display   = 'none';
+    document.getElementById('login-phone').value    = '';
+    document.getElementById('login-otp').value      = '';
+    document.getElementById('login-phone-error').textContent = '';
+    document.getElementById('login-otp-error').textContent   = '';
+    overlay.classList.add('active');
+    document.body.classList.add('modal-open');
+  }
+
+  function closeLogin() {
+    overlay.classList.remove('active');
+    document.body.classList.remove('modal-open');
+  }
+
+  document.getElementById('login-btn-header').addEventListener('click', () => {
+    const session = getSession();
+    if (session?.loggedIn) {
+      if (confirm(`Logged in as +91${session.phone}. Logout?`)) {
+        logout();
+        updateLoginHeader();
+      }
+    } else {
+      openLogin();
+    }
+  });
+
+  document.getElementById('login-modal-close').addEventListener('click', closeLogin);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeLogin(); });
+
+  // Step 1: Request OTP
+  document.getElementById('login-request-btn').addEventListener('click', async () => {
+    const phone   = document.getElementById('login-phone').value.trim();
+    const errorEl = document.getElementById('login-phone-error');
+    const btn     = document.getElementById('login-request-btn');
+
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      errorEl.textContent = 'Enter valid 10-digit mobile number.';
+      return;
+    }
+
+    errorEl.textContent = '';
+    btn.disabled = true;
+    btn.querySelector('span').textContent = 'Opening WhatsApp…';
+
+    try {
+      await requestOTP(phone);
+      stepPhone.style.display = 'none';
+      stepOTP.style.display   = 'block';
+      document.getElementById('login-subtitle').textContent = `OTP requested for +91${phone}`;
+      document.getElementById('login-otp').focus();
+    } catch (err) {
+      console.error(err);
+      errorEl.textContent = 'Failed to create OTP. Check Firestore permissions.';
+    } finally {
+      btn.disabled = false;
+      btn.querySelector('span').textContent = 'Request OTP via WhatsApp';
+    }
+  });
+
+  // Step 2: Back
+  document.getElementById('login-back-btn').addEventListener('click', () => {
+    stepOTP.style.display   = 'none';
+    stepPhone.style.display = 'block';
+  });
+
+  // Step 2: Verify OTP
+  document.getElementById('login-verify-btn').addEventListener('click', async () => {
+    const phone   = document.getElementById('login-phone').value.trim();
+    const otp     = document.getElementById('login-otp').value.trim();
+    const errorEl = document.getElementById('login-otp-error');
+    const btn     = document.getElementById('login-verify-btn');
+
+    if (otp.length !== 6) { errorEl.textContent = 'Enter 6-digit OTP.'; return; }
+
+    errorEl.textContent = '';
+    btn.disabled = true;
+    btn.querySelector('span').textContent = 'Verifying…';
+
+    try {
+      const result = await verifyOTP(phone, otp);
+      if (result.success) {
+        updateLoginHeader();
+        closeLogin();
+        showToast('Logged in successfully!');
+      } else {
+        errorEl.textContent = result.message;
+      }
+    } catch (err) {
+      console.error(err);
+      errorEl.textContent = 'Verification failed. Try again.';
+    } finally {
+      btn.disabled = false;
+      btn.querySelector('span').textContent = 'Verify OTP';
+    }
+  });
+
+  document.getElementById('login-otp').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('login-verify-btn').click();
+  });
 }
 
 /* =============================================

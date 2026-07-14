@@ -70,30 +70,36 @@ document.getElementById('signout-btn').addEventListener('click', () => signOut(a
 /* ================================================================
    DATA LOADING
    ================================================================ */
-let allOrders   = [];
-let allServices = [];
-let allProducts = [];
-let allSlots    = [];
-let allCoupons  = [];
+let allOrders    = [];
+let allServices  = [];
+let allProducts  = [];
+let allSlots     = [];
+let allCoupons   = [];
+let allSocieties = [];
+let allStylists  = [];
 
 async function loadAllData() {
   try {
-    const [ordersSnap, servicesSnap, productsSnap, slotsSnap, couponsSnap] = await Promise.all([
+    const [ordersSnap, servicesSnap, productsSnap, slotsSnap, couponsSnap, societiesSnap, stylistsSnap] = await Promise.all([
       getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'))),
       getDocs(collection(db, 'services')),
       getDocs(collection(db, 'products')),
       getDocs(query(collection(db, 'slots'), orderBy('order', 'asc'))),
       getDocs(collection(db, 'coupons')),
+      getDocs(query(collection(db, 'societies'), orderBy('name', 'asc'))),
+      getDocs(collection(db, 'stylists')),
     ]);
 
-    allOrders   = ordersSnap.docs.map((d)   => ({ id: d.id, ...d.data() }));
-    allServices = servicesSnap.docs.map((d)  => ({ id: d.id, ...d.data() }));
-    allProducts = productsSnap.docs.map((d)  => ({ id: d.id, ...d.data() }));
-    allSlots    = slotsSnap.docs.map((d)    => ({ id: d.id, ...d.data() }));
-    allCoupons  = couponsSnap.docs.map((d)  => ({ id: d.id, ...d.data() }));
+    allOrders    = ordersSnap.docs.map((d)    => ({ id: d.id, ...d.data() }));
+    allServices  = servicesSnap.docs.map((d)  => ({ id: d.id, ...d.data() }));
+    allProducts  = productsSnap.docs.map((d)  => ({ id: d.id, ...d.data() }));
+    allSlots     = slotsSnap.docs.map((d)     => ({ id: d.id, ...d.data() }));
+    allCoupons   = couponsSnap.docs.map((d)   => ({ id: d.id, ...d.data() }));
+    allSocieties = societiesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    allStylists  = stylistsSnap.docs.map((d)  => ({ id: d.id, ...d.data() }));
 
     renderKPIs(allOrders);
-    renderBookingsTable(allOrders);
+    renderBookingsTable(allOrders, allStylists);
     renderSalesReport(allOrders);
     renderInventoryReport(allOrders, allServices);
     renderProductsTab(allProducts);
@@ -101,11 +107,63 @@ async function loadAllData() {
     renderReportsTab(allOrders);
     renderSlotsTab(allSlots);
     renderDiscountsTab(allCoupons);
+    renderApartmentsTab(allSocieties);
+    renderStaffMgmtTab(allStylists);
   } catch (err) {
     console.error('Data load failed:', err);
     showToast('Failed to load data. Check Firestore rules.');
   }
 }
+
+/* ================================================================
+   OTP REQUESTS
+   ================================================================ */
+async function loadPendingOTPs() {
+  const cutoff = new Date(Date.now() - 20 * 60 * 1000); // last 20 min
+  try {
+    const snap = await getDocs(
+      query(
+        collection(db, 'otps'),
+        where('used', '==', false),
+        orderBy('createdAt', 'desc'),
+      )
+    );
+
+    const recent = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .filter((o) => o.createdAt?.toDate?.() > cutoff);
+
+    const panel   = document.getElementById('otp-panel');
+    const listEl  = document.getElementById('otp-list');
+
+    if (!recent.length) { panel.style.display = 'none'; return; }
+
+    panel.style.display = 'block';
+    listEl.innerHTML = recent.map((o) => {
+      const expires = o.expiresAt?.toDate?.();
+      const minsLeft = expires ? Math.max(0, Math.round((expires - new Date()) / 60000)) : 0;
+      const waLink = `https://wa.me/91${o.phone}?text=${encodeURIComponent(`Your Bloom Salon OTP is: ${o.otp}. Valid for ${minsLeft} minutes.`)}`;
+      return `
+        <div style="display:flex;align-items:center;gap:16px;padding:10px 12px;background:var(--color-surface);border-radius:var(--radius-md);border:1px solid var(--color-border);">
+          <div style="flex:1;">
+            <span style="font-weight:700;font-size:0.9rem">+91 ${o.phone}</span>
+            <span style="color:var(--color-text-muted);font-size:0.75rem;margin-left:8px">${minsLeft}m left</span>
+          </div>
+          <span style="font-family:monospace;font-size:1.4rem;font-weight:800;letter-spacing:4px;color:var(--color-accent-primary)">${o.otp}</span>
+          <a href="${waLink}" target="_blank"
+            style="padding:6px 14px;border-radius:var(--radius-md);background:#25D366;color:white;font-size:0.78rem;font-weight:700;text-decoration:none;white-space:nowrap;">
+            Send via WhatsApp
+          </a>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    console.error('OTP load failed:', err);
+  }
+}
+
+loadPendingOTPs();
+document.getElementById('refresh-otps-btn').addEventListener('click', loadPendingOTPs);
+setInterval(loadPendingOTPs, 30000); // auto-refresh every 30s
 
 /* ================================================================
    TAB SWITCHING
@@ -138,11 +196,11 @@ function renderKPIs(orders) {
 /* ================================================================
    BOOKINGS TABLE
    ================================================================ */
-function renderBookingsTable(orders) {
+function renderBookingsTable(orders, stylists) {
   const tbody = document.getElementById('orders-tbody');
 
   if (!orders.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="table-empty"><p>No bookings yet.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="table-empty"><p>No bookings yet.</p></div></td></tr>`;
     return;
   }
 
@@ -161,6 +219,10 @@ function renderBookingsTable(orders) {
       ? order.createdAt.toDate().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
       : '—';
 
+    const staffName = order.stylistName
+      ? `<span style="font-weight:600;font-size:0.82rem;color:var(--color-accent-primary)">${order.stylistName}</span>`
+      : `<span style="font-size:0.75rem;color:var(--color-text-muted)">Unassigned</span>`;
+
     return `
       <tr data-id="${order.id}">
         <td class="td-customer">
@@ -175,6 +237,10 @@ function renderBookingsTable(orders) {
           <span style="display:block;font-size:0.72rem;color:var(--color-text-muted)">${createdDate}</span>
         </td>
         <td class="td-amount">₹${(order.total || 0).toLocaleString('en-IN')}</td>
+        <td>
+          ${staffName}
+          <button class="action-btn assign-btn" style="margin-top:4px;display:block" data-id="${order.id}" data-name="${customer.name || ''}" data-date="${appt.date || ''}" data-slot="${appt.timeSlot || ''}">Assign</button>
+        </td>
         <td><span class="status-badge ${statusCls}">${order.status || 'confirmed'}</span></td>
         <td class="td-actions">
           <button class="action-btn complete" data-id="${order.id}" data-action="completed" ${!isPending ? 'disabled' : ''}>✓ Done</button>
@@ -183,8 +249,12 @@ function renderBookingsTable(orders) {
       </tr>`;
   }).join('');
 
-  tbody.querySelectorAll('.action-btn:not([disabled])').forEach((btn) => {
+  tbody.querySelectorAll('.action-btn:not([disabled]):not(.assign-btn)').forEach((btn) => {
     btn.addEventListener('click', () => updateOrderStatus(btn.dataset.id, btn.dataset.action));
+  });
+
+  tbody.querySelectorAll('.assign-btn').forEach((btn) => {
+    btn.addEventListener('click', () => openAssignModal(btn.dataset.id, btn.dataset.name, btn.dataset.date, btn.dataset.slot));
   });
 }
 
@@ -196,7 +266,7 @@ async function updateOrderStatus(orderId, newStatus) {
     await updateDoc(doc(db, 'orders', orderId), { status: newStatus });
     const order = allOrders.find((o) => o.id === orderId);
     if (order) order.status = newStatus;
-    renderBookingsTable(allOrders);
+    renderBookingsTable(allOrders, allStylists);
     renderKPIs(allOrders);
     renderSalesReport(allOrders);
     showToast(`Booking marked as ${newStatus}`);
@@ -210,7 +280,7 @@ document.getElementById('refresh-btn').addEventListener('click', loadAllData);
 
 document.getElementById('status-filter').addEventListener('change', (e) => {
   const val = e.target.value;
-  renderBookingsTable(val === 'all' ? allOrders : allOrders.filter((o) => (o.status || 'confirmed') === val));
+  renderBookingsTable(val === 'all' ? allOrders : allOrders.filter((o) => (o.status || 'confirmed') === val), allStylists);
 });
 
 /* ================================================================
@@ -895,6 +965,402 @@ document.getElementById('prod-delete').addEventListener('click', async () => {
 });
 
 /* ================================================================
+   APARTMENTS TAB
+   ================================================================ */
+function renderApartmentsTab(societies) {
+  const tbody = document.getElementById('apt-tbody');
+  if (!societies.length) {
+    tbody.innerHTML = `<tr><td colspan="4"><div class="table-empty"><p>No apartments yet. Add your first one.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = societies.map((s) => {
+    const badge = s.active !== false
+      ? `<span class="status-badge status-completed">Active</span>`
+      : `<span class="status-badge status-cancelled">Inactive</span>`;
+    return `
+      <tr>
+        <td style="font-weight:600">${s.name || '—'}</td>
+        <td style="color:var(--color-text-muted)">${s.area || '—'}</td>
+        <td>${badge}</td>
+        <td><button class="action-btn edit-svc-btn apt-edit-btn" data-apt-id="${s.id}">✎ Edit</button></td>
+      </tr>`;
+  }).join('');
+  tbody.querySelectorAll('.apt-edit-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const soc = allSocieties.find((s) => s.id === btn.dataset.aptId);
+      if (soc) openAptModal(soc);
+    });
+  });
+}
+
+let _editingAptId = null;
+
+function openAptModal(soc) {
+  _editingAptId = soc ? soc.id : null;
+  const isEdit  = !!soc;
+  document.getElementById('apt-modal-title').textContent = isEdit ? 'Edit Apartment' : 'Add Apartment';
+  document.getElementById('apt-name').value   = soc?.name   || '';
+  document.getElementById('apt-area').value   = soc?.area   || '';
+  document.getElementById('apt-active').value = String(soc?.active ?? true);
+  document.getElementById('apt-error').textContent = '';
+  document.getElementById('apt-delete').style.display = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('apt-save').textContent = isEdit ? 'Save Changes' : 'Add Apartment';
+  document.getElementById('apt-overlay').classList.add('open');
+}
+
+function closeAptModal() {
+  document.getElementById('apt-overlay').classList.remove('open');
+  _editingAptId = null;
+}
+
+const BANGALORE_COMMUNITIES = [
+  // Whitefield
+  { name: 'Adarsh Palm Retreat',           area: 'Whitefield' },
+  { name: 'Adarsh Palm Meadows',           area: 'Whitefield' },
+  { name: 'Assetz Marq',                   area: 'Whitefield' },
+  { name: 'Brigade Cosmopolis',            area: 'Whitefield' },
+  { name: 'Brigade Gateway',               area: 'Whitefield' },
+  { name: 'Brigade Orchards',              area: 'Whitefield' },
+  { name: 'Casagrand Ultima',              area: 'Whitefield' },
+  { name: 'Concorde Sylvan View',          area: 'Whitefield' },
+  { name: 'DNR Reflection',               area: 'Whitefield' },
+  { name: 'Embassy Springs',              area: 'Whitefield' },
+  { name: 'Godrej Reflections',           area: 'Whitefield' },
+  { name: 'Godrej Splendour',             area: 'Whitefield' },
+  { name: 'L&T Raintree Boulevard',       area: 'Whitefield' },
+  { name: 'Mahindra Windchimes',          area: 'Whitefield' },
+  { name: 'Mantri Webcity',              area: 'Whitefield' },
+  { name: 'Nitesh Caesars Palace',        area: 'Whitefield' },
+  { name: 'Prestige Lakeside Habitat',    area: 'Whitefield' },
+  { name: 'Prestige Shantiniketan',       area: 'Whitefield' },
+  { name: 'Prestige White Meadows',       area: 'Whitefield' },
+  { name: 'Purva Fountainhead',           area: 'Whitefield' },
+  { name: 'Purva Skywood',               area: 'Whitefield' },
+  { name: 'Rajapushpa Provincia',         area: 'Whitefield' },
+  { name: 'RMZ Latitude',               area: 'Whitefield' },
+  { name: 'Salarpuria Greenage',          area: 'Whitefield' },
+  { name: 'Salarpuria Sattva Misty Charm',area: 'Whitefield' },
+  { name: 'Shriram Summitt',             area: 'Whitefield' },
+  { name: 'Sobha Dream Acres',           area: 'Whitefield' },
+  { name: 'Sumadhura Epitome',           area: 'Whitefield' },
+  { name: 'Tata New Haven',             area: 'Whitefield' },
+  { name: 'Vaishnavi Terraces',          area: 'Whitefield' },
+  // Marathahalli
+  { name: 'Brigade Caladium',            area: 'Marathahalli' },
+  { name: 'Mantri Espana',              area: 'Marathahalli' },
+  { name: 'Nester Piccadily',            area: 'Marathahalli' },
+  { name: 'Prestige Misty Waters',       area: 'Marathahalli' },
+  { name: 'Purva Skydale',              area: 'Marathahalli' },
+  { name: 'Salarpuria Sattva Magnus',    area: 'Marathahalli' },
+  { name: 'SJR Watermark',             area: 'Marathahalli' },
+  { name: 'Sobha City',               area: 'Marathahalli' },
+  // Varthur
+  { name: 'Brigade Utopia',            area: 'Varthur' },
+  { name: 'Gopalan Grandeur',          area: 'Varthur' },
+  { name: 'Mana Glen',               area: 'Varthur' },
+  { name: 'Prestige Sunrise Park',     area: 'Varthur' },
+  { name: 'Prestige Tranquility',      area: 'Varthur' },
+  { name: 'Rohan Prerna',             area: 'Varthur' },
+  { name: 'Vaishnavi Serene',         area: 'Varthur' },
+];
+
+async function seedDefaultApartments() {
+  const btn = document.getElementById('seed-apts-btn');
+  btn.disabled    = true;
+  btn.textContent = 'Seeding…';
+
+  const existingNames = new Set(allSocieties.map((s) => s.name));
+  const toAdd = BANGALORE_COMMUNITIES.filter((c) => !existingNames.has(c.name));
+
+  if (!toAdd.length) {
+    showToast('All communities already exist.');
+    btn.disabled    = false;
+    btn.textContent = 'Seed Bangalore Communities';
+    return;
+  }
+
+  let added = 0;
+  for (const community of toAdd) {
+    try {
+      const ref = await addDoc(collection(db, 'societies'), {
+        ...community,
+        active: true,
+        createdAt: Timestamp.now(),
+      });
+      allSocieties.push({ id: ref.id, ...community, active: true });
+      added++;
+    } catch (err) {
+      console.error(`Failed to add ${community.name}:`, err);
+    }
+  }
+
+  allSocieties.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  renderApartmentsTab(allSocieties);
+  showToast(`Added ${added} communities.`);
+  btn.disabled    = false;
+  btn.textContent = 'Seed Bangalore Communities';
+}
+
+document.getElementById('seed-apts-btn').addEventListener('click', async () => {
+  if (!confirm(`Add ${BANGALORE_COMMUNITIES.length} Bangalore communities to Firestore? Existing ones will be skipped.`)) return;
+  await seedDefaultApartments();
+});
+
+document.getElementById('add-apt-btn').addEventListener('click', () => openAptModal(null));
+document.getElementById('apt-close').addEventListener('click', closeAptModal);
+document.getElementById('apt-cancel').addEventListener('click', closeAptModal);
+document.getElementById('apt-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('apt-overlay')) closeAptModal();
+});
+
+document.getElementById('apt-save').addEventListener('click', async () => {
+  const name    = document.getElementById('apt-name').value.trim();
+  const area    = document.getElementById('apt-area').value.trim();
+  const active  = document.getElementById('apt-active').value === 'true';
+  const errorEl = document.getElementById('apt-error');
+  const saveBtn = document.getElementById('apt-save');
+
+  if (!name) { errorEl.textContent = 'Apartment name is required.'; return; }
+
+  saveBtn.disabled = true;
+  const origText   = saveBtn.textContent;
+  saveBtn.textContent = 'Saving…';
+  errorEl.textContent = '';
+
+  const data = { name, area, active };
+
+  try {
+    if (_editingAptId) {
+      await updateDoc(doc(db, 'societies', _editingAptId), data);
+      const idx = allSocieties.findIndex((s) => s.id === _editingAptId);
+      if (idx !== -1) Object.assign(allSocieties[idx], data);
+      showToast('Apartment updated');
+    } else {
+      const ref = await addDoc(collection(db, 'societies'), { ...data, createdAt: Timestamp.now() });
+      allSocieties.push({ id: ref.id, ...data });
+      allSocieties.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      showToast('Apartment added');
+    }
+    closeAptModal();
+    renderApartmentsTab(allSocieties);
+  } catch (err) {
+    console.error(err);
+    errorEl.textContent = 'Operation failed. Check Firestore permissions.';
+  } finally {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = origText;
+  }
+});
+
+document.getElementById('apt-delete').addEventListener('click', async () => {
+  if (!_editingAptId) return;
+  const soc = allSocieties.find((s) => s.id === _editingAptId);
+  if (!confirm(`Delete "${soc?.name}"? Cannot be undone.`)) return;
+  const btn = document.getElementById('apt-delete');
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  try {
+    await deleteDoc(doc(db, 'societies', _editingAptId));
+    allSocieties = allSocieties.filter((s) => s.id !== _editingAptId);
+    closeAptModal();
+    renderApartmentsTab(allSocieties);
+    showToast('Apartment deleted');
+  } catch (err) {
+    console.error(err);
+    document.getElementById('apt-error').textContent = 'Delete failed.';
+    btn.disabled = false; btn.textContent = '🗑 Delete';
+  }
+});
+
+/* ================================================================
+   STAFF MGMT TAB
+   ================================================================ */
+function renderStaffMgmtTab(stylists) {
+  const tbody = document.getElementById('staff-mgmt-tbody');
+  if (!stylists.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="table-empty"><p>No staff yet. Add your first member.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = stylists.map((s) => {
+    const badge = s.active !== false
+      ? `<span class="status-badge status-completed">Active</span>`
+      : `<span class="status-badge status-cancelled">Inactive</span>`;
+    const specs = (s.specializations || []).map((sp) => `<span class="service-tag">${sp}</span>`).join(' ');
+    const genderPill = s.gender === 'male'
+      ? `<span class="gender-pill men">Male</span>`
+      : s.gender === 'other'
+        ? `<span class="gender-pill" style="background:rgba(167,139,250,0.12);color:#a78bfa;border:1px solid rgba(167,139,250,0.25)">Other</span>`
+        : `<span class="gender-pill women">Female</span>`;
+    return `
+      <tr>
+        <td style="font-weight:600">${s.name || '—'} ${genderPill}</td>
+        <td style="color:var(--color-text-muted)">${s.phone || '—'}</td>
+        <td>${specs || '—'}</td>
+        <td>${badge}</td>
+        <td><button class="action-btn edit-svc-btn staff-edit-btn" data-staff-id="${s.id}">✎ Edit</button></td>
+      </tr>`;
+  }).join('');
+  tbody.querySelectorAll('.staff-edit-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const st = allStylists.find((s) => s.id === btn.dataset.staffId);
+      if (st) openStaffModal(st);
+    });
+  });
+}
+
+let _editingStaffId = null;
+
+function openStaffModal(st) {
+  _editingStaffId = st ? st.id : null;
+  const isEdit    = !!st;
+  document.getElementById('staff-modal-title').textContent = isEdit ? 'Edit Staff' : 'Add Staff';
+  document.getElementById('staff-name').value             = st?.name   || '';
+  document.getElementById('staff-phone').value            = st?.phone  || '';
+  document.getElementById('staff-specializations').value  = (st?.specializations || []).join(', ');
+  document.getElementById('staff-gender').value           = st?.gender || 'female';
+  document.getElementById('staff-active').value           = String(st?.active ?? true);
+  document.getElementById('staff-error').textContent      = '';
+  document.getElementById('staff-delete').style.display   = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('staff-save').textContent       = isEdit ? 'Save Changes' : 'Add Staff';
+  document.getElementById('staff-overlay').classList.add('open');
+}
+
+function closeStaffModal() {
+  document.getElementById('staff-overlay').classList.remove('open');
+  _editingStaffId = null;
+}
+
+document.getElementById('add-staff-btn').addEventListener('click', () => openStaffModal(null));
+document.getElementById('staff-close').addEventListener('click', closeStaffModal);
+document.getElementById('staff-cancel').addEventListener('click', closeStaffModal);
+document.getElementById('staff-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('staff-overlay')) closeStaffModal();
+});
+
+document.getElementById('staff-save').addEventListener('click', async () => {
+  const name    = document.getElementById('staff-name').value.trim();
+  const phone   = document.getElementById('staff-phone').value.trim();
+  const specsRaw = document.getElementById('staff-specializations').value;
+  const specializations = specsRaw ? specsRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  const gender  = document.getElementById('staff-gender').value;
+  const active  = document.getElementById('staff-active').value === 'true';
+  const errorEl = document.getElementById('staff-error');
+  const saveBtn = document.getElementById('staff-save');
+
+  if (!name) { errorEl.textContent = 'Name is required.'; return; }
+
+  saveBtn.disabled    = true;
+  const origText      = saveBtn.textContent;
+  saveBtn.textContent = 'Saving…';
+  errorEl.textContent = '';
+
+  const data = { name, phone, specializations, gender, active };
+
+  try {
+    if (_editingStaffId) {
+      await updateDoc(doc(db, 'stylists', _editingStaffId), data);
+      const idx = allStylists.findIndex((s) => s.id === _editingStaffId);
+      if (idx !== -1) Object.assign(allStylists[idx], data);
+      showToast('Staff updated');
+    } else {
+      const ref = await addDoc(collection(db, 'stylists'), { ...data, createdAt: Timestamp.now() });
+      allStylists.push({ id: ref.id, ...data });
+      showToast('Staff added');
+    }
+    closeStaffModal();
+    renderStaffMgmtTab(allStylists);
+  } catch (err) {
+    console.error(err);
+    errorEl.textContent = 'Operation failed. Check Firestore permissions.';
+  } finally {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = origText;
+  }
+});
+
+document.getElementById('staff-delete').addEventListener('click', async () => {
+  if (!_editingStaffId) return;
+  const st = allStylists.find((s) => s.id === _editingStaffId);
+  if (!confirm(`Delete "${st?.name}"? Cannot be undone.`)) return;
+  const btn = document.getElementById('staff-delete');
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  try {
+    await deleteDoc(doc(db, 'stylists', _editingStaffId));
+    allStylists = allStylists.filter((s) => s.id !== _editingStaffId);
+    closeStaffModal();
+    renderStaffMgmtTab(allStylists);
+    showToast('Staff deleted');
+  } catch (err) {
+    console.error(err);
+    document.getElementById('staff-error').textContent = 'Delete failed.';
+    btn.disabled = false; btn.textContent = '🗑 Delete';
+  }
+});
+
+/* ================================================================
+   STAFF ASSIGNMENT MODAL
+   ================================================================ */
+let _assigningOrderId = null;
+
+function openAssignModal(orderId, customerName, date, slot) {
+  _assigningOrderId = orderId;
+  document.getElementById('assign-booking-label').textContent =
+    `${customerName} · ${date} · ${slot}`;
+  document.getElementById('assign-error').textContent = '';
+
+  const select = document.getElementById('assign-staff-select');
+  const activeStylists = allStylists.filter((s) => s.active !== false);
+  const order = allOrders.find((o) => o.id === orderId);
+
+  select.innerHTML = '<option value="">— Unassigned —</option>' +
+    activeStylists.map((s) =>
+      `<option value="${s.id}" data-name="${s.name}" ${order?.stylistId === s.id ? 'selected' : ''}>${s.name}${s.specializations?.length ? ' · ' + s.specializations.slice(0,2).join(', ') : ''}</option>`
+    ).join('');
+
+  document.getElementById('assign-overlay').classList.add('open');
+}
+
+function closeAssignModal() {
+  document.getElementById('assign-overlay').classList.remove('open');
+  _assigningOrderId = null;
+}
+
+document.getElementById('assign-close').addEventListener('click', closeAssignModal);
+document.getElementById('assign-cancel').addEventListener('click', closeAssignModal);
+document.getElementById('assign-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('assign-overlay')) closeAssignModal();
+});
+
+document.getElementById('assign-save').addEventListener('click', async () => {
+  if (!_assigningOrderId) return;
+  const select    = document.getElementById('assign-staff-select');
+  const stylistId = select.value;
+  const stylistName = stylistId
+    ? select.options[select.selectedIndex].dataset.name
+    : null;
+  const errorEl   = document.getElementById('assign-error');
+  const saveBtn   = document.getElementById('assign-save');
+
+  saveBtn.disabled    = true;
+  saveBtn.textContent = 'Saving…';
+  errorEl.textContent = '';
+
+  try {
+    await updateDoc(doc(db, 'orders', _assigningOrderId), { stylistId: stylistId || null, stylistName: stylistName || null });
+    const order = allOrders.find((o) => o.id === _assigningOrderId);
+    if (order) { order.stylistId = stylistId || null; order.stylistName = stylistName || null; }
+    closeAssignModal();
+    renderBookingsTable(allOrders, allStylists);
+    showToast(stylistName ? `Assigned to ${stylistName}` : 'Staff unassigned');
+  } catch (err) {
+    console.error(err);
+    errorEl.textContent = 'Assignment failed. Check Firestore permissions.';
+  } finally {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Save Assignment';
+  }
+});
+
+/* ================================================================
    DISCOUNTS / COUPONS TAB
    ================================================================ */
 function renderDiscountsTab(coupons) {
@@ -1064,7 +1530,7 @@ document.getElementById('coupon-delete').addEventListener('click', async () => {
 function renderSlotsTab(slots) {
   const tbody = document.getElementById('slots-tbody');
   if (!slots.length) {
-    tbody.innerHTML = `<tr><td colspan="4"><div class="table-empty"><p>No slots yet. Add your first time slot.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5"><div class="table-empty"><p>No slots yet. Add your first time slot.</p></div></td></tr>`;
     return;
   }
 
@@ -1072,10 +1538,14 @@ function renderSlotsTab(slots) {
     const activeBadge = slot.active !== false
       ? `<span class="status-badge status-completed">Active</span>`
       : `<span class="status-badge status-cancelled">Inactive</span>`;
+    const apartmentLabel = slot.societies?.length
+      ? `<span style="font-size:0.75rem;color:var(--color-text-muted)">${slot.societies.slice(0, 2).join(', ')}${slot.societies.length > 2 ? ` +${slot.societies.length - 2}` : ''}</span>`
+      : `<span style="font-size:0.75rem;color:var(--color-accent-primary)">All apartments</span>`;
     return `
       <tr>
         <td style="color:var(--color-text-muted);font-size:0.82rem">${slot.order ?? i + 1}</td>
         <td style="font-weight:600">${slot.timeSlot || '—'}</td>
+        <td>${apartmentLabel}</td>
         <td>${activeBadge}</td>
         <td><button class="action-btn edit-svc-btn slot-edit-btn" data-slot-id="${slot.id}">✎ Edit</button></td>
       </tr>`;
@@ -1097,14 +1567,40 @@ let _editingSlotId = null;
 function openSlotModal(slot) {
   _editingSlotId = slot ? slot.id : null;
   const isEdit   = !!slot;
+  const selected = new Set(slot?.societies ?? []);
 
-  document.getElementById('slot-modal-title').textContent     = isEdit ? 'Edit Slot' : 'Add Slot';
-  document.getElementById('slot-label').value                 = slot?.timeSlot ?? '';
-  document.getElementById('slot-order').value                 = slot?.order    ?? (allSlots.length + 1);
-  document.getElementById('slot-active').value                = String(slot?.active ?? true);
-  document.getElementById('slot-error').textContent           = '';
-  document.getElementById('slot-delete').style.display        = isEdit ? 'inline-flex' : 'none';
-  document.getElementById('slot-save').textContent            = isEdit ? 'Save Changes' : 'Add Slot';
+  document.getElementById('slot-modal-title').textContent = isEdit ? 'Edit Slot' : 'Add Slot';
+  document.getElementById('slot-order').value             = slot?.order    ?? (allSlots.length + 1);
+
+  // Set select — add custom option if value not in predefined list
+  const slotSelect = document.getElementById('slot-label');
+  const timeSlotVal = slot?.timeSlot ?? '';
+  if (timeSlotVal && !Array.from(slotSelect.options).some((o) => o.value === timeSlotVal)) {
+    const customOpt = new Option(timeSlotVal, timeSlotVal);
+    slotSelect.appendChild(customOpt);
+  }
+  slotSelect.value = timeSlotVal;
+  document.getElementById('slot-active').value            = String(slot?.active ?? true);
+  document.getElementById('slot-error').textContent       = '';
+  document.getElementById('slot-delete').style.display   = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('slot-save').textContent       = isEdit ? 'Save Changes' : 'Add Slot';
+
+  // Populate apartment checkboxes
+  const wrap = document.getElementById('slot-societies-wrap');
+  if (!allSocieties.length) {
+    wrap.innerHTML = '<p style="font-size:0.78rem;color:var(--color-text-muted)">No apartments configured yet. Add them in the Apartments tab.</p>';
+  } else {
+    wrap.innerHTML = allSocieties
+      .filter((s) => s.active !== false)
+      .map((s) => `
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;color:var(--color-text-secondary)">
+          <input type="checkbox" value="${s.name}" ${selected.has(s.name) ? 'checked' : ''}
+            style="accent-color:var(--color-accent-primary);width:15px;height:15px;cursor:pointer" />
+          ${s.name}${s.area ? `<span style="font-size:0.72rem;color:var(--color-text-muted)"> · ${s.area}</span>` : ''}
+        </label>`
+      ).join('');
+  }
+
   document.getElementById('slot-overlay').classList.add('open');
 }
 
@@ -1121,20 +1617,23 @@ document.getElementById('slot-overlay').addEventListener('click', (e) => {
 });
 
 document.getElementById('slot-save').addEventListener('click', async () => {
-  const timeSlot = document.getElementById('slot-label').value.trim();
-  const order    = parseInt(document.getElementById('slot-order').value, 10) || 1;
-  const active   = document.getElementById('slot-active').value === 'true';
+  const timeSlot  = document.getElementById('slot-label').value.trim();
+  const order     = parseInt(document.getElementById('slot-order').value, 10) || 1;
+  const active    = document.getElementById('slot-active').value === 'true';
+  const societies = Array.from(
+    document.getElementById('slot-societies-wrap').querySelectorAll('input[type="checkbox"]:checked')
+  ).map((cb) => cb.value);
   const errorEl  = document.getElementById('slot-error');
   const saveBtn  = document.getElementById('slot-save');
 
-  if (!timeSlot) { errorEl.textContent = 'Time slot label is required.'; return; }
+  if (!timeSlot) { errorEl.textContent = 'Select a time slot.'; return; }
 
   saveBtn.disabled    = true;
   const origText      = saveBtn.textContent;
   saveBtn.textContent = 'Saving…';
   errorEl.textContent = '';
 
-  const data = { timeSlot, order, active };
+  const data = { timeSlot, order, active, societies };
 
   try {
     if (_editingSlotId) {

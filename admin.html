@@ -52,6 +52,15 @@
 
     <main class="admin-body">
 
+      <!-- OTP Requests Banner -->
+      <div id="otp-panel" style="display:none;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h3 style="font-size:0.95rem;font-weight:700;">Pending OTP Requests</h3>
+          <button class="refresh-btn" id="refresh-otps-btn">Refresh</button>
+        </div>
+        <div id="otp-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
       <!-- KPI Cards -->
       <div class="stats-grid" id="kpi-grid">
         <div class="stat-card">
@@ -79,8 +88,10 @@
         <button class="tab-btn" data-tab="services">🛎 Services</button>
         <button class="tab-btn" data-tab="slots">🕐 Slots</button>
         <button class="tab-btn" data-tab="discounts">🎟 Discounts</button>
+        <button class="tab-btn" data-tab="apartments">🏢 Apartments</button>
+        <button class="tab-btn" data-tab="staff-mgmt">👤 Staff</button>
         <button class="tab-btn" data-tab="inventory">🗂 Inventory</button>
-        <button class="tab-btn" data-tab="staff">👥 Staff</button>
+        <button class="tab-btn" data-tab="staff">📅 Schedule</button>
         <button class="tab-btn" data-tab="reports">📊 Reports</button>
       </nav>
 
@@ -111,12 +122,13 @@
                 <th>Services</th>
                 <th>Date &amp; Time</th>
                 <th>Amount</th>
+                <th>Staff</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="orders-tbody">
-              <tr><td colspan="6"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
+              <tr><td colspan="7"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -203,6 +215,7 @@
               <tr>
                 <th style="width:40px;">#</th>
                 <th>Time Slot</th>
+                <th>Apartments</th>
                 <th>Status</th>
                 <th>Edit</th>
               </tr>
@@ -239,6 +252,59 @@
             </thead>
             <tbody id="coupons-tbody">
               <tr><td colspan="8"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== TAB: APARTMENTS ===== -->
+      <div class="tab-panel" id="tab-apartments">
+        <div class="section-header">
+          <h2 class="section-title">Apartments / Societies</h2>
+          <div style="display:flex;gap:8px;">
+            <button class="refresh-btn" id="seed-apts-btn">Seed Bangalore Communities</button>
+            <button class="refresh-btn add-svc-btn" id="add-apt-btn">+ Add Apartment</button>
+          </div>
+        </div>
+        <p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:16px;">
+          Apartments listed here appear in the customer booking form autocomplete.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Area</th>
+                <th>Status</th>
+                <th>Edit</th>
+              </tr>
+            </thead>
+            <tbody id="apt-tbody">
+              <tr><td colspan="4"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== TAB: STAFF MGMT ===== -->
+      <div class="tab-panel" id="tab-staff-mgmt">
+        <div class="section-header">
+          <h2 class="section-title">Staff Members</h2>
+          <button class="refresh-btn add-svc-btn" id="add-staff-btn">+ Add Staff</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Specializations</th>
+                <th>Status</th>
+                <th>Edit</th>
+              </tr>
+            </thead>
+            <tbody id="staff-mgmt-tbody">
+              <tr><td colspan="5"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -572,6 +638,110 @@
     </div>
   </div>
 
+  <!-- ============ APARTMENT ADD / EDIT MODAL ============ -->
+  <div class="svc-overlay" id="apt-overlay">
+    <div class="svc-modal">
+      <div class="svc-modal-header">
+        <h3 id="apt-modal-title">Add Apartment</h3>
+        <button class="svc-close" id="apt-close">✕</button>
+      </div>
+      <div class="svc-modal-body">
+        <div class="svc-form-row">
+          <label>Apartment / Society Name</label>
+          <input class="svc-input" id="apt-name" type="text" placeholder="e.g. Adarsh Palm Retreat" />
+        </div>
+        <div class="svc-form-row">
+          <label>Area / Locality</label>
+          <input class="svc-input" id="apt-area" type="text" placeholder="e.g. Whitefield, Bangalore" />
+        </div>
+        <div class="svc-form-row">
+          <label>Status</label>
+          <select class="svc-input" id="apt-active">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+        <p class="svc-error" id="apt-error"></p>
+      </div>
+      <div class="svc-modal-footer">
+        <button class="svc-delete-btn" id="apt-delete" style="display:none;">🗑 Delete</button>
+        <button class="svc-cancel-btn" id="apt-cancel">Cancel</button>
+        <button class="svc-save-btn" id="apt-save">Add Apartment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ STAFF ADD / EDIT MODAL ============ -->
+  <div class="svc-overlay" id="staff-overlay">
+    <div class="svc-modal">
+      <div class="svc-modal-header">
+        <h3 id="staff-modal-title">Add Staff</h3>
+        <button class="svc-close" id="staff-close">✕</button>
+      </div>
+      <div class="svc-modal-body">
+        <div class="svc-form-row">
+          <label>Full Name</label>
+          <input class="svc-input" id="staff-name" type="text" placeholder="e.g. Priya Sharma" />
+        </div>
+        <div class="svc-form-row">
+          <label>Phone</label>
+          <input class="svc-input" id="staff-phone" type="tel" placeholder="10-digit mobile number" maxlength="10" />
+        </div>
+        <div class="svc-form-row">
+          <label>Specializations (comma-separated)</label>
+          <input class="svc-input" id="staff-specializations" type="text" placeholder="e.g. Waxing, Facial, Massage" />
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Gender</label>
+            <select class="svc-input" id="staff-gender">
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label>Status</label>
+            <select class="svc-input" id="staff-active">
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <p class="svc-error" id="staff-error"></p>
+      </div>
+      <div class="svc-modal-footer">
+        <button class="svc-delete-btn" id="staff-delete" style="display:none;">🗑 Delete</button>
+        <button class="svc-cancel-btn" id="staff-cancel">Cancel</button>
+        <button class="svc-save-btn" id="staff-save">Add Staff</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ STAFF ASSIGNMENT MODAL ============ -->
+  <div class="svc-overlay" id="assign-overlay">
+    <div class="svc-modal" style="width:min(380px,92vw)">
+      <div class="svc-modal-header">
+        <h3>Assign Staff</h3>
+        <button class="svc-close" id="assign-close">✕</button>
+      </div>
+      <div class="svc-modal-body">
+        <p id="assign-booking-label" style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:12px;"></p>
+        <div class="svc-form-row">
+          <label>Select Staff Member</label>
+          <select class="svc-input" id="assign-staff-select">
+            <option value="">— Unassigned —</option>
+          </select>
+        </div>
+        <p class="svc-error" id="assign-error"></p>
+      </div>
+      <div class="svc-modal-footer">
+        <button class="svc-cancel-btn" id="assign-cancel">Cancel</button>
+        <button class="svc-save-btn" id="assign-save">Save Assignment</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ SLOT ADD / EDIT MODAL ============ -->
   <div class="svc-overlay" id="slot-overlay">
     <div class="svc-modal">
@@ -581,12 +751,38 @@
       </div>
       <div class="svc-modal-body">
         <div class="svc-form-row">
-          <label>Time Slot Label</label>
-          <input class="svc-input" id="slot-label" type="text" placeholder="e.g. 10:00 AM – 12:00 PM" />
+          <label>Time Slot</label>
+          <select class="svc-input" id="slot-label">
+            <option value="">— Select a time slot —</option>
+            <option>7:00 – 9:00 AM</option>
+            <option>8:00 – 10:00 AM</option>
+            <option>9:00 – 11:00 AM</option>
+            <option>10:00 AM – 12:00 PM</option>
+            <option>11:00 AM – 1:00 PM</option>
+            <option>12:00 – 2:00 PM</option>
+            <option>1:00 – 3:00 PM</option>
+            <option>2:00 – 4:00 PM</option>
+            <option>3:00 – 5:00 PM</option>
+            <option>4:00 – 6:00 PM</option>
+            <option>5:00 – 7:00 PM</option>
+            <option>6:00 – 8:00 PM</option>
+            <option>7:00 – 9:00 PM</option>
+          </select>
         </div>
         <div class="svc-form-row">
           <label>Display Order</label>
           <input class="svc-input" id="slot-order" type="number" min="1" placeholder="1" />
+        </div>
+        <div class="svc-form-row">
+          <label>Apartments — leave all unchecked to show for every apartment</label>
+          <div id="slot-societies-wrap" style="
+            max-height:180px;overflow-y:auto;border:1px solid var(--color-border);
+            border-radius:8px;padding:10px 12px;background:var(--color-surface);
+            display:flex;flex-direction:column;gap:8px;">
+            <p style="font-size:0.78rem;color:var(--color-text-muted)" id="slot-societies-empty">
+              Loading apartments…
+            </p>
+          </div>
         </div>
         <div class="svc-form-row">
           <label>Status</label>
