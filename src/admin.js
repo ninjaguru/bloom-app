@@ -216,15 +216,23 @@ function renderBookingsTable(orders, stylists) {
         </td>
         <td>${payoutCell}</td>
         <td><span class="status-badge ${statusCls}">${statusLabel}</span></td>
-        <td class="td-actions">
-          <button class="action-btn complete" data-id="${order.id}" data-action="completed" ${!isPending ? 'disabled' : ''}>✓ Done</button>
-          <button class="action-btn cancel"   data-id="${order.id}" data-action="cancelled" ${!isPending ? 'disabled' : ''}>✕ Cancel</button>
+        <td>
+          <select class="admin-select status-select" data-id="${order.id}" style="font-size:0.78rem;padding:5px 8px;">
+            <option value="confirmed"   ${(order.status||'confirmed')==='confirmed'   ? 'selected':''}>Confirmed</option>
+            <option value="assigned"    ${order.status==='assigned'    ? 'selected':''}>Assigned</option>
+            <option value="en_route"    ${order.status==='en_route'    ? 'selected':''}>On the Way</option>
+            <option value="in_progress" ${order.status==='in_progress' ? 'selected':''}>In Progress</option>
+            <option value="rescheduled" ${order.status==='rescheduled' ? 'selected':''}>Rescheduled</option>
+            <option value="completed"   ${order.status==='completed'   ? 'selected':''}>Completed</option>
+            <option value="cancelled"   ${order.status==='cancelled'   ? 'selected':''}>Cancelled</option>
+            <option value="no_show"     ${order.status==='no_show'     ? 'selected':''}>No Show</option>
+          </select>
         </td>
       </tr>`;
   }).join('');
 
-  tbody.querySelectorAll('.action-btn:not([disabled]):not(.assign-btn)').forEach((btn) => {
-    btn.addEventListener('click', () => updateOrderStatus(btn.dataset.id, btn.dataset.action));
+  tbody.querySelectorAll('.status-select').forEach((sel) => {
+    sel.addEventListener('change', () => updateOrderStatus(sel.dataset.id, sel.value));
   });
 
   tbody.querySelectorAll('.assign-btn').forEach((btn) => {
