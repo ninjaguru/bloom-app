@@ -11,7 +11,7 @@ import {
 import { openBookingModal } from './booking.js';
 import { signInWithGoogle, logout, onAuthChange, getCurrentUser, saveProfile, loadProfile } from './auth.js';
 import { db } from './firebase.js';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 /* ---------- Service Card Images ---------- */
 const _px = (id) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop`;
@@ -116,7 +116,7 @@ export function renderServices(services) {
       <div class="service-card" data-service-id="${serviceId}" style="animation-delay: ${index * 60}ms">
         <div class="service-card-image">
           <img src="${image}" alt="${service.title}" loading="lazy" />
-          ${discount > 0 ? `<span class="service-card-badge badge-discount">${discount}% OFF</span>` : ''}
+          ${service.isBundle ? `<span class="service-card-badge badge-bundle">Bundle</span>` : discount > 0 ? `<span class="service-card-badge badge-discount">${discount}% OFF</span>` : ''}
           <span class="service-card-duration">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             ${service.durationMinutes} min
@@ -532,11 +532,11 @@ export function setupLoginModal() {
     const aptSelect = document.getElementById('profile-apartment');
     try {
       const snap = await getDocs(
-        query(collection(db, 'societies'), where('active', '==', true), orderBy('name', 'asc'))
+        query(collection(db, 'societies'), where('active', '==', true))
       );
       const names = snap.empty
         ? ['Adarsh Palm Retreat','Brigade Cosmopolis','Prestige Shantiniketan','Sobha Dream Acres','Salarpuria Greenage']
-        : snap.docs.map((d) => d.data().name).filter(Boolean);
+        : snap.docs.map((d) => d.data().name).filter(Boolean).sort();
       aptSelect.innerHTML = '<option value="">— Select Apartment / Society —</option>' +
         names.map((n) => `<option value="${n}">${n}</option>`).join('');
     } catch {

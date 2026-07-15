@@ -1,4 +1,4 @@
-import { subscribeToServices, getCategories } from './services.js';
+import { subscribeToServices, getCategories, getBundles } from './services.js';
 import { renderServices, renderCategories, setupGlobalListeners, setupLoginModal, closeCart, showToast } from './ui.js';
 import { setupBookingListeners } from './booking.js';
 import { setupRecommender } from './recommender.js';
@@ -19,9 +19,17 @@ function loadServices() {
   grid.innerHTML = '';
   empty.style.display = 'none';
 
-  subscribeToServices(currentGender, currentCategory, (services) => {
-    cachedServices = services;
-    renderServices(services);
+  subscribeToServices(currentGender, currentCategory, async (services) => {
+    // Prepend active bundles when showing All category
+    let displayed = services;
+    if (!currentCategory || currentCategory === 'All') {
+      try {
+        const bundles = await getBundles(currentGender);
+        displayed = [...bundles, ...services];
+      } catch { /* bundles optional */ }
+    }
+    cachedServices = displayed;
+    renderServices(displayed);
   });
 }
 

@@ -78,6 +78,7 @@
         <button class="tab-btn" data-tab="sales">📈 Sales</button>
         <button class="tab-btn" data-tab="services">🛎 Services</button>
         <button class="tab-btn" data-tab="slots">🕐 Slots</button>
+        <button class="tab-btn" data-tab="bundles">📦 Bundles</button>
         <button class="tab-btn" data-tab="discounts">🎟 Discounts</button>
         <button class="tab-btn" data-tab="apartments">🏢 Apartments</button>
         <button class="tab-btn" data-tab="staff-mgmt">👤 Staff</button>
@@ -214,6 +215,37 @@
             </thead>
             <tbody id="slots-tbody">
               <tr><td colspan="4"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== TAB: BUNDLES ===== -->
+      <div class="tab-panel" id="tab-bundles">
+        <div class="section-header">
+          <h2 class="section-title">Service Bundles</h2>
+          <button class="refresh-btn add-svc-btn" id="add-bundle-btn">+ Create Bundle</button>
+        </div>
+        <p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:16px;">
+          Bundles group multiple services into one package. Duration auto-calculated. Price is adjustable.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Bundle</th>
+                <th>Services</th>
+                <th>Duration</th>
+                <th>Original</th>
+                <th>Bundle Price</th>
+                <th>Savings</th>
+                <th>Gender</th>
+                <th>Status</th>
+                <th>Edit</th>
+              </tr>
+            </thead>
+            <tbody id="bundles-tbody">
+              <tr><td colspan="9"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -571,6 +603,75 @@
         <button class="svc-delete-btn" id="prod-delete" style="display:none;">🗑 Delete</button>
         <button class="svc-cancel-btn" id="prod-cancel">Cancel</button>
         <button class="svc-save-btn" id="prod-save">Add Product</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ BUNDLE ADD / EDIT MODAL ============ -->
+  <div class="svc-overlay" id="bundle-overlay">
+    <div class="svc-modal" style="width:min(600px,95vw);max-height:90vh;overflow-y:auto;">
+      <div class="svc-modal-header">
+        <h3 id="bundle-modal-title">Create Bundle</h3>
+        <button class="svc-close" id="bundle-close">✕</button>
+      </div>
+      <div class="svc-modal-body">
+        <div class="svc-form-row">
+          <label>Bundle Name</label>
+          <input class="svc-input" id="bundle-title" type="text" placeholder="e.g. Glow & Go Combo" />
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Gender</label>
+            <select class="svc-input" id="bundle-gender">
+              <option value="women">Women</option>
+              <option value="men">Men</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+          <div>
+            <label>Status</label>
+            <select class="svc-input" id="bundle-active">
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="svc-form-row">
+          <label>Select Services</label>
+          <div id="bundle-services-wrap" style="
+            max-height:220px;overflow-y:auto;border:1px solid var(--color-border);
+            border-radius:8px;padding:10px 12px;background:var(--color-surface);
+            display:flex;flex-direction:column;gap:8px;">
+            <p style="font-size:0.78rem;color:var(--color-text-muted)">Loading services…</p>
+          </div>
+        </div>
+
+        <!-- Auto-calculated summary -->
+        <div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:14px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
+          <div>
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--color-text-muted);margin-bottom:4px;">Total Duration</div>
+            <div id="bundle-calc-duration" style="font-size:1.1rem;font-weight:700;color:var(--color-text-primary)">0 min</div>
+          </div>
+          <div>
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--color-text-muted);margin-bottom:4px;">Original Price</div>
+            <div id="bundle-calc-original" style="font-size:1.1rem;font-weight:700;color:var(--color-text-secondary)">₹0</div>
+          </div>
+          <div>
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--color-text-muted);margin-bottom:4px;">Savings</div>
+            <div id="bundle-calc-savings" style="font-size:1.1rem;font-weight:700;color:var(--color-accent-primary)">₹0</div>
+          </div>
+        </div>
+
+        <div class="svc-form-row">
+          <label>Bundle Price (₹) — editable</label>
+          <input class="svc-input" id="bundle-price" type="number" min="0" placeholder="Enter bundle price" />
+        </div>
+        <p class="svc-error" id="bundle-error"></p>
+      </div>
+      <div class="svc-modal-footer">
+        <button class="svc-delete-btn" id="bundle-delete" style="display:none;">🗑 Delete</button>
+        <button class="svc-cancel-btn" id="bundle-cancel">Cancel</button>
+        <button class="svc-save-btn" id="bundle-save">Create Bundle</button>
       </div>
     </div>
   </div>

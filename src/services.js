@@ -46,6 +46,19 @@ export function subscribeToServices(gender, category, callback) {
 }
 
 /**
+ * Fetch active bundles for a gender.
+ */
+export async function getBundles(gender) {
+  const bundlesRef = collection(db, 'bundles');
+  const snap = await getDocs(
+    query(bundlesRef, where('active', '==', true))
+  );
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data(), isBundle: true, serviceId: d.id, category: 'Bundle' }))
+    .filter((b) => b.gender === gender || b.gender === 'both');
+}
+
+/**
  * Get unique categories for a gender (one-time fetch).
  */
 export async function getCategories(gender) {

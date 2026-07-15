@@ -77,10 +77,11 @@ let allSlots     = [];
 let allCoupons   = [];
 let allSocieties = [];
 let allStylists  = [];
+let allBundles   = [];
 
 async function loadAllData() {
   try {
-    const [ordersSnap, servicesSnap, productsSnap, slotsSnap, couponsSnap, societiesSnap, stylistsSnap] = await Promise.all([
+    const [ordersSnap, servicesSnap, productsSnap, slotsSnap, couponsSnap, societiesSnap, stylistsSnap, bundlesSnap] = await Promise.all([
       getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'))),
       getDocs(collection(db, 'services')),
       getDocs(collection(db, 'products')),
@@ -88,6 +89,7 @@ async function loadAllData() {
       getDocs(collection(db, 'coupons')),
       getDocs(query(collection(db, 'societies'), orderBy('name', 'asc'))),
       getDocs(collection(db, 'stylists')),
+      getDocs(collection(db, 'bundles')),
     ]);
 
     allOrders    = ordersSnap.docs.map((d)    => ({ id: d.id, ...d.data() }));
@@ -97,6 +99,7 @@ async function loadAllData() {
     allCoupons   = couponsSnap.docs.map((d)   => ({ id: d.id, ...d.data() }));
     allSocieties = societiesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     allStylists  = stylistsSnap.docs.map((d)  => ({ id: d.id, ...d.data() }));
+    allBundles   = bundlesSnap.docs.map((d)   => ({ id: d.id, ...d.data() }));
 
     renderKPIs(allOrders);
     renderBookingsTable(allOrders, allStylists);
@@ -107,6 +110,7 @@ async function loadAllData() {
     renderReportsTab(allOrders);
     renderSlotsTab(allSlots);
     renderDiscountsTab(allCoupons);
+    renderBundlesTab(allBundles);
     renderApartmentsTab(allSocieties);
     renderStaffMgmtTab(allStylists);
   } catch (err) {
@@ -918,6 +922,231 @@ document.getElementById('prod-delete').addEventListener('click', async () => {
     document.getElementById('prod-error').textContent = 'Delete failed.';
     btn.disabled    = false;
     btn.textContent = '🗑 Delete';
+  }
+});
+
+/* ================================================================
+   BUNDLES TAB
+   ================================================================ */
+function renderBundlesTab(bundles) {
+  const tbody = document.getElementById('bundles-tbody');
+  if (!bundles.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="table-empty"><p>No bundles yet. Create your first package.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = bundles.map((b) => {
+    const savings    = (b.originalPrice || 0) - (b.price || 0);
+    const savingsPct = b.originalPrice ? Math.round((savings / b.originalPrice) * 100) : 0;
+    const badge      = b.active !== false
+      ? `<span class="status-badge status-completed">Active</span>`
+      : `<span class="status-badge status-cancelled">Inactive</span>`;
+    const genderPill = b.gender === 'men'
+      ? `<span class="gender-pill men">Men</span>`
+      : b.gender === 'both'
+        ? `<span class="service-tag">Both</span>`
+        : `<span class="gender-pill women">Women</span>`;
+    const svcNames = (b.services || []).map((s) => `<span class="service-tag">${s.title?.split(' ').slice(0,3).join(' ')}…</span>`).join(' ');
+    return `
+      <tr>
+        <td style="font-weight:700">${b.title || '—'}</td>
+        <td style="max-width:200px">${svcNames || '—'}</td>
+        <td style="font-weight:600">${b.totalDurationMinutes || 0} min</td>
+        <td style="color:var(--color-text-muted);text-decoration:line-through">₹${(b.originalPrice || 0).toLocaleString('en-IN')}</td>
+        <td style="font-weight:700;color:var(--color-gold)">₹${(b.price || 0).toLocaleString('en-IN')}</td>
+        <td><span class="discount-pill">${savingsPct}% off</span></td>
+        <td>${genderPill}</td>
+        <td>${badge}</td>
+        <td><button class="action-btn edit-svc-btn bundle-edit-btn" data-bundle-id="${b.id}">✎ Edit</button></td>
+      </tr>`;
+  }).join('');
+  tbody.querySelectorAll('.bundle-edit-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const bundle = allBundles.find((b) => b.id === btn.dataset.bundleId);
+      if (bundle) openBundleModal(bundle);
+    });
+  });
+}
+
+/* ================================================================
+   BUNDLE CRUD MODAL
+   ================================================================ */
+let _editingBundleId = null;
+
+function populateBundleServices(selectedIds = [], gender = 'women') {
+  const wrap = document.getElementById('bundle-services-wrap');
+  const filtered = gender === 'both' ? allServices : allServices.filter((s) => s.gender === gender || gender === 'both');
+
+  if (!filtered.length) {
+    wrap.innerHTML = '<p style="font-size:0.78rem;color:var(--color-text-muted)">No services found. Seed services first.</p>';
+    return;
+  }
+
+  // Group by category
+  const grouped = {};
+  filtered.forEach((s) => {
+    const cat = s.category || 'Other';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(s);
+  });
+
+  wrap.innerHTML = Object.entries(grouped).map(([cat, svcs]) => `
+    <div>
+      <p style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--color-text-muted);margin:6px 0 4px;">${cat}</p>
+      ${svcs.map((s) => {
+        const sid = s.serviceId || s.id;
+        return `
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.84rem;color:var(--color-text-secondary);padding:3px 0;">
+          <input type="checkbox" class="bundle-svc-check" value="${sid}"
+            data-price="${s.price || 0}" data-duration="${s.durationMinutes || 0}"
+            data-title="${(s.title || '').replace(/"/g, '&quot;')}"
+            ${selectedIds.includes(sid) ? 'checked' : ''}
+            style="accent-color:var(--color-accent-primary);width:15px;height:15px;cursor:pointer;" />
+          <span style="flex:1">${s.title}</span>
+          <span style="color:var(--color-gold);font-size:0.78rem;font-weight:600">₹${s.price?.toLocaleString('en-IN')} · ${s.durationMinutes}min</span>
+        </label>`;
+      }).join('')}
+    </div>`).join('');
+
+  // Wire up auto-calculation
+  wrap.querySelectorAll('.bundle-svc-check').forEach((cb) => {
+    cb.addEventListener('change', recalcBundle);
+  });
+  recalcBundle();
+}
+
+function recalcBundle() {
+  const checks   = document.querySelectorAll('.bundle-svc-check:checked');
+  const totalMin = Array.from(checks).reduce((s, cb) => s + parseInt(cb.dataset.duration || 0), 0);
+  const totalPx  = Array.from(checks).reduce((s, cb) => s + parseInt(cb.dataset.price    || 0), 0);
+
+  document.getElementById('bundle-calc-duration').textContent = `${totalMin} min`;
+  document.getElementById('bundle-calc-original').textContent = `₹${totalPx.toLocaleString('en-IN')}`;
+
+  const currentPrice = parseInt(document.getElementById('bundle-price').value) || 0;
+  const savings      = totalPx - currentPrice;
+  document.getElementById('bundle-calc-savings').textContent  =
+    savings > 0 ? `₹${savings.toLocaleString('en-IN')}` : '₹0';
+
+  // Auto-set price if not yet set
+  if (!document.getElementById('bundle-price').value) {
+    document.getElementById('bundle-price').value = Math.round(totalPx * 0.85); // default 15% off
+    recalcBundle();
+  }
+}
+
+document.getElementById('bundle-price').addEventListener('input', () => {
+  const checks  = document.querySelectorAll('.bundle-svc-check:checked');
+  const totalPx = Array.from(checks).reduce((s, cb) => s + parseInt(cb.dataset.price || 0), 0);
+  const price   = parseInt(document.getElementById('bundle-price').value) || 0;
+  const savings = totalPx - price;
+  document.getElementById('bundle-calc-savings').textContent = savings > 0 ? `₹${savings.toLocaleString('en-IN')}` : '₹0';
+});
+
+document.getElementById('bundle-gender').addEventListener('change', (e) => {
+  const selected = Array.from(document.querySelectorAll('.bundle-svc-check:checked')).map((cb) => cb.value);
+  populateBundleServices(selected, e.target.value);
+});
+
+function openBundleModal(bundle) {
+  _editingBundleId = bundle ? bundle.id : null;
+  const isEdit     = !!bundle;
+
+  document.getElementById('bundle-modal-title').textContent = isEdit ? 'Edit Bundle' : 'Create Bundle';
+  document.getElementById('bundle-title').value             = bundle?.title   || '';
+  document.getElementById('bundle-gender').value            = bundle?.gender  || 'women';
+  document.getElementById('bundle-active').value            = String(bundle?.active ?? true);
+  document.getElementById('bundle-price').value             = bundle?.price   ?? '';
+  document.getElementById('bundle-error').textContent       = '';
+  document.getElementById('bundle-delete').style.display    = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('bundle-save').textContent        = isEdit ? 'Save Changes' : 'Create Bundle';
+
+  const selectedIds = (bundle?.services || []).map((s) => s.serviceId || s.id);
+  populateBundleServices(selectedIds, bundle?.gender || 'women');
+
+  document.getElementById('bundle-overlay').classList.add('open');
+}
+
+function closeBundleModal() {
+  document.getElementById('bundle-overlay').classList.remove('open');
+  _editingBundleId = null;
+}
+
+document.getElementById('add-bundle-btn').addEventListener('click', () => openBundleModal(null));
+document.getElementById('bundle-close').addEventListener('click', closeBundleModal);
+document.getElementById('bundle-cancel').addEventListener('click', closeBundleModal);
+document.getElementById('bundle-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('bundle-overlay')) closeBundleModal();
+});
+
+document.getElementById('bundle-save').addEventListener('click', async () => {
+  const title   = document.getElementById('bundle-title').value.trim();
+  const gender  = document.getElementById('bundle-gender').value;
+  const active  = document.getElementById('bundle-active').value === 'true';
+  const price   = parseInt(document.getElementById('bundle-price').value, 10);
+  const errorEl = document.getElementById('bundle-error');
+  const saveBtn = document.getElementById('bundle-save');
+
+  const checks = Array.from(document.querySelectorAll('.bundle-svc-check:checked'));
+
+  if (!title)           { errorEl.textContent = 'Bundle name is required.'; return; }
+  if (checks.length < 2) { errorEl.textContent = 'Select at least 2 services.'; return; }
+  if (isNaN(price) || price <= 0) { errorEl.textContent = 'Enter a valid bundle price.'; return; }
+
+  const services = checks.map((cb) => ({
+    serviceId:       cb.value,
+    title:           cb.dataset.title,
+    price:           parseInt(cb.dataset.price    || 0),
+    durationMinutes: parseInt(cb.dataset.duration || 0),
+  }));
+
+  const totalDurationMinutes = services.reduce((s, sv) => s + sv.durationMinutes, 0);
+  const originalPrice        = services.reduce((s, sv) => s + sv.price, 0);
+
+  const data = { title, gender, active, price, originalPrice, totalDurationMinutes, services };
+
+  saveBtn.disabled    = true;
+  const origText      = saveBtn.textContent;
+  saveBtn.textContent = 'Saving…';
+  errorEl.textContent = '';
+
+  try {
+    if (_editingBundleId) {
+      await updateDoc(doc(db, 'bundles', _editingBundleId), data);
+      const idx = allBundles.findIndex((b) => b.id === _editingBundleId);
+      if (idx !== -1) Object.assign(allBundles[idx], data);
+      showToast('Bundle updated');
+    } else {
+      const ref = await addDoc(collection(db, 'bundles'), { ...data, createdAt: Timestamp.now() });
+      allBundles.push({ id: ref.id, ...data });
+      showToast('Bundle created');
+    }
+    closeBundleModal();
+    renderBundlesTab(allBundles);
+  } catch (err) {
+    console.error(err);
+    errorEl.textContent = 'Operation failed. Check Firestore permissions.';
+  } finally {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = origText;
+  }
+});
+
+document.getElementById('bundle-delete').addEventListener('click', async () => {
+  if (!_editingBundleId) return;
+  const bundle = allBundles.find((b) => b.id === _editingBundleId);
+  if (!confirm(`Delete "${bundle?.title}"? Cannot be undone.`)) return;
+  const btn = document.getElementById('bundle-delete');
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  try {
+    await deleteDoc(doc(db, 'bundles', _editingBundleId));
+    allBundles = allBundles.filter((b) => b.id !== _editingBundleId);
+    closeBundleModal();
+    renderBundlesTab(allBundles);
+    showToast('Bundle deleted');
+  } catch (err) {
+    console.error(err);
+    document.getElementById('bundle-error').textContent = 'Delete failed.';
+    btn.disabled = false; btn.textContent = '🗑 Delete';
   }
 });
 
