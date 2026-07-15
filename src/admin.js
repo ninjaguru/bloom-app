@@ -162,8 +162,21 @@ function renderBookingsTable(orders, stylists) {
     const appt      = order.appointment || {};
     const customer  = order.customer    || {};
     const items     = order.items       || [];
-    const isPending = order.status === 'confirmed';
-    const statusCls = `status-${order.status || 'confirmed'}`;
+    const ACTIVE_STATUSES = ['confirmed', 'assigned', 'en_route', 'in_progress', 'rescheduled'];
+    const STATUS_LABELS   = {
+      confirmed: 'Confirmed', assigned: 'Assigned', en_route: 'On the Way',
+      in_progress: 'In Progress', completed: 'Completed',
+      cancelled: 'Cancelled', rescheduled: 'Rescheduled', no_show: 'No Show',
+    };
+    const STATUS_CSS = {
+      confirmed: 'status-confirmed', assigned: 'status-confirmed',
+      en_route: 'status-confirmed', in_progress: 'status-confirmed',
+      rescheduled: 'status-confirmed', completed: 'status-completed',
+      cancelled: 'status-cancelled', no_show: 'status-cancelled',
+    };
+    const isPending = ACTIVE_STATUSES.includes(order.status || 'confirmed');
+    const statusCls = STATUS_CSS[order.status] || 'status-confirmed';
+    const statusLabel = STATUS_LABELS[order.status] || order.status || 'confirmed';
 
     const tags = items.map((i) =>
       `<span class="service-tag">${(i.title || '').split(' ').slice(0, 3).join(' ')}…</span>`
@@ -202,7 +215,7 @@ function renderBookingsTable(orders, stylists) {
           <button class="action-btn assign-btn" style="margin-top:4px;display:block" data-id="${order.id}" data-name="${customer.name || ''}" data-date="${appt.date || ''}" data-slot="${appt.timeSlot || ''}">Assign</button>
         </td>
         <td>${payoutCell}</td>
-        <td><span class="status-badge ${statusCls}">${order.status || 'confirmed'}</span></td>
+        <td><span class="status-badge ${statusCls}">${statusLabel}</span></td>
         <td class="td-actions">
           <button class="action-btn complete" data-id="${order.id}" data-action="completed" ${!isPending ? 'disabled' : ''}>✓ Done</button>
           <button class="action-btn cancel"   data-id="${order.id}" data-action="cancelled" ${!isPending ? 'disabled' : ''}>✕ Cancel</button>

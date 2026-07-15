@@ -628,6 +628,64 @@ export function setupLoginModal() {
   /* ---- Booking history modal ---- */
   const historyOverlay = document.getElementById('history-overlay');
 
+  const STATUS_CONFIG = {
+    confirmed:   { label: 'Confirmed',   cls: 'status-confirmed' },
+    assigned:    { label: 'Assigned',    cls: 'status-confirmed' },
+    en_route:    { label: 'On the Way',  cls: 'status-confirmed' },
+    in_progress: { label: 'In Progress', cls: 'status-confirmed' },
+    completed:   { label: 'Completed',   cls: 'status-completed' },
+    cancelled:   { label: 'Cancelled',   cls: 'status-cancelled' },
+    rescheduled: { label: 'Rescheduled', cls: 'status-confirmed' },
+    no_show:     { label: 'No Show',     cls: 'status-cancelled' },
+  };
+
+  const PAGE_SIZE = 5;
+  let _historyOrders = [];
+  let _historyPage   = 0;
+
+  function renderHistoryPage() {
+    const body  = document.getElementById('history-body');
+    const total = _historyOrders.length;
+    const start = _historyPage * PAGE_SIZE;
+    const page  = _historyOrders.slice(start, start + PAGE_SIZE);
+    const pages = Math.ceil(total / PAGE_SIZE);
+
+    body.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:12px;padding-bottom:8px;">
+        ${page.map((o) => {
+          const appt   = o.appointment || {};
+          const items  = (o.items || []).map((i) => i.title).join(', ');
+          const sc     = STATUS_CONFIG[o.status] || STATUS_CONFIG.confirmed;
+          const booked = o.createdAt?.toDate?.().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) || '—';
+          return `
+            <div style="background:var(--gradient-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;">
+                <div>
+                  <div style="font-weight:700;font-size:0.92rem;margin-bottom:2px">${appt.date || '—'} · ${appt.timeSlot || '—'}</div>
+                  <div style="font-size:0.75rem;color:var(--color-text-muted)">Booked on ${booked}</div>
+                </div>
+                <span class="status-badge ${sc.cls}">${sc.label}</span>
+              </div>
+              <div style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:8px;line-height:1.5">${items || '—'}</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:0.78rem;color:var(--color-text-muted)">${o.customer?.address || ''}</span>
+                <span style="font-weight:700;color:var(--color-gold)">₹${(o.total || 0).toLocaleString('en-IN')}</span>
+              </div>
+              ${o.stylistName ? `<div style="font-size:0.75rem;color:var(--color-accent-primary);margin-top:6px">Staff: ${o.stylistName}</div>` : ''}
+            </div>`;
+        }).join('')}
+      </div>
+      ${pages > 1 ? `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--color-border);margin-top:4px;">
+          <button id="hist-prev" style="padding:6px 16px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-secondary);font-size:0.82rem;cursor:pointer;" ${_historyPage === 0 ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>← Prev</button>
+          <span style="font-size:0.78rem;color:var(--color-text-muted)">Page ${_historyPage + 1} of ${pages}</span>
+          <button id="hist-next" style="padding:6px 16px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-secondary);font-size:0.82rem;cursor:pointer;" ${_historyPage >= pages - 1 ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>Next →</button>
+        </div>` : ''}`;
+
+    document.getElementById('hist-prev')?.addEventListener('click', () => { _historyPage--; renderHistoryPage(); });
+    document.getElementById('hist-next')?.addEventListener('click', () => { _historyPage++; renderHistoryPage(); });
+  }
+
   async function openHistoryModal() {
     const user = getCurrentUser();
     if (!user) return;
@@ -644,14 +702,15 @@ export function setupLoginModal() {
         query(collection(db, 'orders'), where('customerUid', '==', user.uid))
       );
 
-      const orders = snap.docs
+      _historyOrders = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
         .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+      _historyPage   = 0;
 
       document.getElementById('history-subtitle').textContent =
-        `${orders.length} booking${orders.length !== 1 ? 's' : ''}`;
+        `${_historyOrders.length} booking${_historyOrders.length !== 1 ? 's' : ''}`;
 
-      if (!orders.length) {
+      if (!_historyOrders.length) {
         body.innerHTML = `
           <div style="text-align:center;padding:48px 24px;color:var(--color-text-secondary);">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.3;margin:0 auto 16px;display:block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -661,32 +720,7 @@ export function setupLoginModal() {
         return;
       }
 
-      const statusCls = { confirmed: 'status-confirmed', completed: 'status-completed', cancelled: 'status-cancelled' };
-
-      body.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px;padding-bottom:8px;">
-        ${orders.map((o) => {
-          const appt    = o.appointment || {};
-          const items   = (o.items || []).map((i) => i.title).join(', ');
-          const cls     = statusCls[o.status || 'confirmed'] || 'status-confirmed';
-          const date    = o.createdAt?.toDate?.().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) || '—';
-          return `
-            <div style="background:var(--gradient-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;">
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;">
-                <div>
-                  <div style="font-weight:700;font-size:0.92rem;margin-bottom:2px">${appt.date || '—'} · ${appt.timeSlot || '—'}</div>
-                  <div style="font-size:0.75rem;color:var(--color-text-muted)">Booked on ${date}</div>
-                </div>
-                <span class="status-badge ${cls}">${o.status || 'confirmed'}</span>
-              </div>
-              <div style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:8px;line-height:1.5">${items || '—'}</div>
-              <div style="display:flex;align-items:center;justify-content:space-between;">
-                <span style="font-size:0.78rem;color:var(--color-text-muted)">${o.customer?.address || ''}</span>
-                <span style="font-weight:700;color:var(--color-gold)">₹${(o.total || 0).toLocaleString('en-IN')}</span>
-              </div>
-              ${o.stylistName ? `<div style="font-size:0.75rem;color:var(--color-accent-primary);margin-top:6px">Staff: ${o.stylistName}</div>` : ''}
-            </div>`;
-        }).join('')}
-      </div>`;
+      renderHistoryPage();
     } catch (err) {
       console.error(err);
       body.innerHTML = `<p style="color:var(--color-red);padding:24px;text-align:center;font-size:0.85rem">Failed to load bookings. Check Firestore permissions.</p>`;
