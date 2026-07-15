@@ -9,7 +9,7 @@ import {
   clearCoupon,
 } from './cart.js';
 import { openBookingModal } from './booking.js';
-import { signInWithGoogle, logout, onAuthChange, getCurrentUser } from './auth.js';
+import { signInWithGoogle, logout, onAuthChange, getCurrentUser, saveProfile, loadProfile } from './auth.js';
 
 /* ---------- Service Card Images ---------- */
 const _px = (id) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop`;
@@ -468,6 +468,7 @@ function updateLoginHeader(user) {
     const name = user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Me';
     label.textContent = name;
     btn.classList.add('logged-in');
+    document.getElementById('profile-dropdown-user').textContent = user.email || user.displayName || '';
   } else {
     label.textContent = 'Login';
     btn.classList.remove('logged-in');
@@ -475,35 +476,129 @@ function updateLoginHeader(user) {
 }
 
 export function setupLoginModal() {
-  const overlay = document.getElementById('login-overlay');
+  const loginOverlay   = document.getElementById('login-overlay');
+  const profileOverlay = document.getElementById('profile-overlay');
+  const dropdown       = document.getElementById('profile-dropdown');
 
-  function openLogin() {
+  /* ---- Login modal ---- */
+  function openLogin()  {
     document.getElementById('login-error').textContent = '';
-    overlay.classList.add('active');
+    loginOverlay.classList.add('active');
     document.body.classList.add('modal-open');
   }
-
   function closeLogin() {
-    overlay.classList.remove('active');
+    loginOverlay.classList.remove('active');
     document.body.classList.remove('modal-open');
   }
 
-  // Keep header in sync with Firebase auth state
-  onAuthChange((user) => updateLoginHeader(user));
+  /* ---- Dropdown ---- */
+  function closeDropdown() { dropdown.classList.remove('open'); }
 
-  document.getElementById('login-btn-header').addEventListener('click', () => {
+  document.getElementById('login-btn-header').addEventListener('click', (e) => {
+    e.stopPropagation();
     const user = getCurrentUser();
     if (user) {
-      if (confirm(`Signed in as ${user.displayName || user.email}. Sign out?`)) {
-        logout();
-      }
+      dropdown.classList.toggle('open');
     } else {
       openLogin();
     }
   });
 
+  document.addEventListener('click', closeDropdown);
+  dropdown.addEventListener('click', (e) => e.stopPropagation());
+
+  document.getElementById('profile-menu-logout').addEventListener('click', () => {
+    closeDropdown();
+    logout();
+  });
+
+  document.getElementById('profile-menu-profile').addEventListener('click', () => {
+    closeDropdown();
+    openProfileModal();
+  });
+
+  /* ---- Profile modal ---- */
+  async function openProfileModal() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    document.getElementById('profile-subtitle').textContent = user.email || '';
+    document.getElementById('profile-email').value = user.email || '';
+    document.getElementById('profile-error').textContent = '';
+
+    // Pre-fill from Firestore
+    try {
+      const profile = await loadProfile(user.uid);
+      if (profile) {
+        document.getElementById('profile-first-name').value = profile.firstName || '';
+        document.getElementById('profile-last-name').value  = profile.lastName  || '';
+        document.getElementById('profile-phone').value      = profile.phone     || '';
+        document.getElementById('profile-apartment').value  = profile.apartment || '';
+        document.getElementById('profile-flat').value       = profile.flat      || '';
+      } else {
+        // Pre-fill name from Google
+        const parts = (user.displayName || '').split(' ');
+        document.getElementById('profile-first-name').value = parts[0] || '';
+        document.getElementById('profile-last-name').value  = parts.slice(1).join(' ') || '';
+        document.getElementById('profile-phone').value      = '';
+        document.getElementById('profile-apartment').value  = '';
+        document.getElementById('profile-flat').value       = '';
+      }
+    } catch (err) { console.error(err); }
+
+    profileOverlay.classList.add('active');
+    document.body.classList.add('modal-open');
+  }
+
+  function closeProfileModal() {
+    profileOverlay.classList.remove('active');
+    document.body.classList.remove('modal-open');
+  }
+
+  document.getElementById('profile-modal-close').addEventListener('click', closeProfileModal);
+  profileOverlay.addEventListener('click', (e) => { if (e.target === profileOverlay) closeProfileModal(); });
+
+  document.getElementById('profile-save-btn').addEventListener('click', async () => {
+    const user    = getCurrentUser();
+    if (!user) return;
+    const errorEl = document.getElementById('profile-error');
+    const btn     = document.getElementById('profile-save-btn');
+    const phone   = document.getElementById('profile-phone').value.trim();
+
+    if (phone && !/^[6-9]\d{9}$/.test(phone)) {
+      errorEl.textContent = 'Enter valid 10-digit mobile number.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.querySelector('span').textContent = 'Saving…';
+    errorEl.textContent = '';
+
+    try {
+      await saveProfile(user.uid, {
+        firstName: document.getElementById('profile-first-name').value.trim(),
+        lastName:  document.getElementById('profile-last-name').value.trim(),
+        email:     user.email,
+        phone,
+        apartment: document.getElementById('profile-apartment').value.trim(),
+        flat:      document.getElementById('profile-flat').value.trim(),
+      });
+      closeProfileModal();
+      showToast('Profile saved!');
+    } catch (err) {
+      console.error(err);
+      errorEl.textContent = 'Save failed. Check Firestore permissions.';
+    } finally {
+      btn.disabled = false;
+      btn.querySelector('span').textContent = 'Save Profile';
+    }
+  });
+
+  /* ---- Google sign-in ---- */
+  onAuthChange((user) => updateLoginHeader(user));
+
   document.getElementById('login-modal-close').addEventListener('click', closeLogin);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeLogin(); });
+  loginOverlay.addEventListener('click', (e) => { if (e.target === loginOverlay) closeLogin(); });
 
   document.getElementById('google-signin-btn').addEventListener('click', async () => {
     const btn     = document.getElementById('google-signin-btn');

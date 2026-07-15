@@ -1,10 +1,11 @@
-import { auth } from './firebase.js';
+import { auth, db } from './firebase.js';
 import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 const provider = new GoogleAuthProvider();
 
@@ -22,4 +23,16 @@ export function getCurrentUser() {
 
 export function onAuthChange(callback) {
   return onAuthStateChanged(auth, callback);
+}
+
+export async function saveProfile(uid, data) {
+  await setDoc(doc(db, 'customers', uid), {
+    ...data,
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function loadProfile(uid) {
+  const snap = await getDoc(doc(db, 'customers', uid));
+  return snap.exists() ? snap.data() : null;
 }

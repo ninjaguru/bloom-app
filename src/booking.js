@@ -1,6 +1,7 @@
 import { checkout } from './cart.js';
 import { db } from './firebase.js';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { getCurrentUser, loadProfile } from './auth.js';
 
 const FALLBACK_APARTMENTS = [
   // Whitefield
@@ -210,7 +211,7 @@ async function loadDateAndSlots(apartmentName) {
   });
 }
 
-export function openBookingModal(cartState) {
+export async function openBookingModal(cartState) {
   selectedDate = null;
   selectedSlot = null;
   _cartState   = cartState;
@@ -219,10 +220,33 @@ export function openBookingModal(cartState) {
   document.getElementById('booking-summary').textContent =
     `${cartState.totalItems} service${cartState.totalItems !== 1 ? 's' : ''} · ₹${cartState.total.toLocaleString('en-IN')}`;
 
-  // Reset address + date/slot sections
-  ['booking-name', 'booking-phone', 'booking-apartment', 'booking-flat'].forEach((id) => {
-    document.getElementById(id).value = '';
-  });
+  // Pre-fill from saved profile
+  const user = getCurrentUser();
+  if (user) {
+    try {
+      const profile = await loadProfile(user.uid);
+      if (profile) {
+        const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ');
+        document.getElementById('booking-name').value      = fullName      || '';
+        document.getElementById('booking-phone').value     = profile.phone || '';
+        document.getElementById('booking-apartment').value = profile.apartment || '';
+        document.getElementById('booking-flat').value      = profile.flat  || '';
+        if (profile.apartment) loadDateAndSlots(profile.apartment);
+      } else {
+        ['booking-name', 'booking-phone', 'booking-apartment', 'booking-flat'].forEach((id) => {
+          document.getElementById(id).value = '';
+        });
+      }
+    } catch {
+      ['booking-name', 'booking-phone', 'booking-apartment', 'booking-flat'].forEach((id) => {
+        document.getElementById(id).value = '';
+      });
+    }
+  } else {
+    ['booking-name', 'booking-phone', 'booking-apartment', 'booking-flat'].forEach((id) => {
+      document.getElementById(id).value = '';
+    });
+  }
   document.getElementById('booking-dates').innerHTML       = '';
   document.getElementById('booking-slots').innerHTML       = '';
   document.getElementById('booking-date-section').style.display = 'none';
