@@ -654,24 +654,59 @@ export function setupLoginModal() {
       <div style="display:flex;flex-direction:column;gap:12px;padding-bottom:8px;">
         ${page.map((o) => {
           const appt   = o.appointment || {};
-          const items  = (o.items || []).map((i) => i.title).join(', ');
           const sc     = STATUS_CONFIG[o.status] || STATUS_CONFIG.confirmed;
-          const booked = o.createdAt?.toDate?.().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) || '—';
+          const booked = o.createdAt?.toDate?.();
+          const bookedStr = booked
+            ? booked.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+            : '—';
+
+          // Format appointment date nicely
+          let apptDateStr = '—', apptDayStr = '';
+          if (appt.date) {
+            const d = new Date(appt.date);
+            apptDateStr = d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+            apptDayStr  = d.toLocaleDateString('en-IN', { weekday:'long' });
+          }
+
+          const serviceTags = (o.items || [])
+            .map((i) => `<span style="display:inline-block;padding:2px 10px;border-radius:999px;background:var(--color-surface);border:1px solid var(--color-border);font-size:0.72rem;color:var(--color-text-secondary);margin:2px 2px 2px 0">${i.title?.split(' ').slice(0,4).join(' ')}</span>`)
+            .join('');
+
           return `
-            <div style="background:var(--gradient-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;">
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;">
-                <div>
-                  <div style="font-weight:700;font-size:0.92rem;margin-bottom:2px">${appt.date || '—'} · ${appt.timeSlot || '—'}</div>
-                  <div style="font-size:0.75rem;color:var(--color-text-muted)">Booked on ${booked}</div>
+            <div style="background:var(--gradient-card);border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden;">
+              <!-- Top accent bar -->
+              <div style="height:3px;background:var(--gradient-accent);opacity:0.7;"></div>
+
+              <div style="padding:16px;">
+                <!-- Header row: date + status -->
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;">
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    <!-- Date block -->
+                    <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:var(--radius-md);padding:8px 12px;text-align:center;min-width:52px;">
+                      <div style="font-size:1.3rem;font-weight:800;line-height:1;color:var(--color-accent-primary)">${appt.date ? new Date(appt.date).getDate() : '—'}</div>
+                      <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--color-text-muted);margin-top:2px">${appt.date ? new Date(appt.date).toLocaleDateString('en-IN',{month:'short'}) : ''}</div>
+                    </div>
+                    <div>
+                      <div style="font-weight:700;font-size:0.9rem;color:var(--color-text-primary)">${apptDayStr}</div>
+                      <div style="font-size:0.8rem;color:var(--color-text-secondary);margin-top:1px">${appt.timeSlot || '—'}</div>
+                    </div>
+                  </div>
+                  <span class="status-badge ${sc.cls}" style="flex-shrink:0">${sc.label}</span>
                 </div>
-                <span class="status-badge ${sc.cls}">${sc.label}</span>
+
+                <!-- Services -->
+                <div style="margin-bottom:12px;">${serviceTags || '<span style="font-size:0.82rem;color:var(--color-text-muted)">—</span>'}</div>
+
+                <!-- Footer: address + price -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--color-border);">
+                  <div>
+                    ${o.customer?.address ? `<div style="font-size:0.75rem;color:var(--color-text-muted)">${o.customer.address}</div>` : ''}
+                    ${o.stylistName ? `<div style="font-size:0.75rem;color:var(--color-accent-primary);margin-top:2px">Staff · ${o.stylistName}</div>` : ''}
+                    <div style="font-size:0.68rem;color:var(--color-text-muted);margin-top:2px">Booked ${bookedStr}</div>
+                  </div>
+                  <div style="font-family:var(--font-display);font-size:1.2rem;font-weight:800;color:var(--color-gold)">₹${(o.total || 0).toLocaleString('en-IN')}</div>
+                </div>
               </div>
-              <div style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:8px;line-height:1.5">${items || '—'}</div>
-              <div style="display:flex;align-items:center;justify-content:space-between;">
-                <span style="font-size:0.78rem;color:var(--color-text-muted)">${o.customer?.address || ''}</span>
-                <span style="font-weight:700;color:var(--color-gold)">₹${(o.total || 0).toLocaleString('en-IN')}</span>
-              </div>
-              ${o.stylistName ? `<div style="font-size:0.75rem;color:var(--color-accent-primary);margin-top:6px">Staff: ${o.stylistName}</div>` : ''}
             </div>`;
         }).join('')}
       </div>
