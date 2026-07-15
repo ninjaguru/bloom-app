@@ -10,6 +10,8 @@ import {
 } from './cart.js';
 import { openBookingModal } from './booking.js';
 import { signInWithGoogle, logout, onAuthChange, getCurrentUser, saveProfile, loadProfile } from './auth.js';
+import { db } from './firebase.js';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 /* ---------- Service Card Images ---------- */
 const _px = (id) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop`;
@@ -525,6 +527,21 @@ export function setupLoginModal() {
     document.getElementById('profile-subtitle').textContent = user.email || '';
     document.getElementById('profile-email').value = user.email || '';
     document.getElementById('profile-error').textContent = '';
+
+    // Populate apartment select from Firestore
+    const aptSelect = document.getElementById('profile-apartment');
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'societies'), where('active', '==', true), orderBy('name', 'asc'))
+      );
+      const names = snap.empty
+        ? ['Adarsh Palm Retreat','Brigade Cosmopolis','Prestige Shantiniketan','Sobha Dream Acres','Salarpuria Greenage']
+        : snap.docs.map((d) => d.data().name).filter(Boolean);
+      aptSelect.innerHTML = '<option value="">— Select Apartment / Society —</option>' +
+        names.map((n) => `<option value="${n}">${n}</option>`).join('');
+    } catch {
+      aptSelect.innerHTML = '<option value="">— Select Apartment / Society —</option>';
+    }
 
     // Pre-fill from Firestore
     try {
