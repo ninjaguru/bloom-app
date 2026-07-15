@@ -215,46 +215,42 @@ export async function openBookingModal(cartState) {
   selectedDate = null;
   selectedSlot = null;
   _cartState   = cartState;
-  populateApartmentList();
+
+  // Reset first — before any async work
+  document.getElementById('booking-dates').innerHTML            = '';
+  document.getElementById('booking-slots').innerHTML            = '';
+  document.getElementById('booking-date-section').style.display = 'none';
+  document.getElementById('booking-slot-section').style.display = 'none';
+  document.getElementById('booking-error').textContent          = '';
+  ['booking-name', 'booking-phone', 'booking-apartment', 'booking-flat'].forEach((id) => {
+    document.getElementById(id).value = '';
+  });
 
   document.getElementById('booking-summary').textContent =
     `${cartState.totalItems} service${cartState.totalItems !== 1 ? 's' : ''} · ₹${cartState.total.toLocaleString('en-IN')}`;
 
-  // Pre-fill from saved profile
+  populateApartmentList();
+
+  document.getElementById('booking-overlay').classList.add('active');
+  document.body.classList.add('modal-open');
+
+  // Pre-fill from saved profile (after modal is visible)
   const user = getCurrentUser();
   if (user) {
     try {
       const profile = await loadProfile(user.uid);
       if (profile) {
         const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ');
-        document.getElementById('booking-name').value      = fullName      || '';
-        document.getElementById('booking-phone').value     = profile.phone || '';
+        document.getElementById('booking-name').value      = fullName          || '';
+        document.getElementById('booking-phone').value     = profile.phone     || '';
         document.getElementById('booking-apartment').value = profile.apartment || '';
-        document.getElementById('booking-flat').value      = profile.flat  || '';
-        if (profile.apartment) loadDateAndSlots(profile.apartment);
-      } else {
-        ['booking-name', 'booking-phone', 'booking-apartment', 'booking-flat'].forEach((id) => {
-          document.getElementById(id).value = '';
-        });
+        document.getElementById('booking-flat').value      = profile.flat      || '';
+        if (profile.apartment) await loadDateAndSlots(profile.apartment);
       }
-    } catch {
-      ['booking-name', 'booking-phone', 'booking-apartment', 'booking-flat'].forEach((id) => {
-        document.getElementById(id).value = '';
-      });
+    } catch (err) {
+      console.warn('Profile pre-fill failed:', err);
     }
-  } else {
-    ['booking-name', 'booking-phone', 'booking-apartment', 'booking-flat'].forEach((id) => {
-      document.getElementById(id).value = '';
-    });
   }
-  document.getElementById('booking-dates').innerHTML       = '';
-  document.getElementById('booking-slots').innerHTML       = '';
-  document.getElementById('booking-date-section').style.display = 'none';
-  document.getElementById('booking-slot-section').style.display = 'none';
-  document.getElementById('booking-error').textContent    = '';
-
-  document.getElementById('booking-overlay').classList.add('active');
-  document.body.classList.add('modal-open');
 }
 
 export function closeBookingModal() {
