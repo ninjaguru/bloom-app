@@ -1,4 +1,5 @@
 import { db } from './firebase.js';
+import { getAuth } from 'firebase/auth';
 import {
   collection, addDoc, serverTimestamp,
   query, where, getDocs,
@@ -173,6 +174,7 @@ export async function checkout(bookingDetails = {}) {
     appointment:     bookingDetails.appointment || {},
     status:          'confirmed',
     createdAt:       serverTimestamp(),
+    customerUid:     getAuth().currentUser?.uid || null,
   };
 
   const docRef = await addDoc(collection(db, 'orders'), orderData);

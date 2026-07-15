@@ -11,7 +11,7 @@ import {
 import { openBookingModal } from './booking.js';
 import { signInWithGoogle, logout, onAuthChange, getCurrentUser, saveProfile, loadProfile } from './auth.js';
 import { db } from './firebase.js';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 /* ---------- Service Card Images ---------- */
 const _px = (id) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop`;
@@ -519,6 +519,20 @@ export function setupLoginModal() {
     openProfileModal();
   });
 
+  document.getElementById('profile-menu-bookings').addEventListener('click', () => {
+    closeDropdown();
+    openHistoryModal();
+  });
+
+  document.getElementById('profile-menu-help').addEventListener('click', () => {
+    closeDropdown();
+    const user = getCurrentUser();
+    const msg  = user
+      ? `Hi Bloom Salon! I need help. My account: ${user.email}`
+      : 'Hi Bloom Salon! I need help with my booking.';
+    window.open(`https://wa.me/919916953366?text=${encodeURIComponent(msg)}`, '_blank');
+  });
+
   /* ---- Profile modal ---- */
   async function openProfileModal() {
     const user = getCurrentUser();
@@ -608,6 +622,85 @@ export function setupLoginModal() {
     } finally {
       btn.disabled = false;
       btn.querySelector('span').textContent = 'Save Profile';
+    }
+  });
+
+  /* ---- Booking history modal ---- */
+  const historyOverlay = document.getElementById('history-overlay');
+
+  async function openHistoryModal() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    historyOverlay.classList.add('active');
+    document.body.classList.add('modal-open');
+
+    const body = document.getElementById('history-body');
+    body.innerHTML = '<div class="services-loading"><div class="loader"></div><p>Loading…</p></div>';
+    document.getElementById('history-subtitle').textContent = 'Your appointment history';
+
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'orders'), where('customerUid', '==', user.uid))
+      );
+
+      const orders = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+
+      document.getElementById('history-subtitle').textContent =
+        `${orders.length} booking${orders.length !== 1 ? 's' : ''}`;
+
+      if (!orders.length) {
+        body.innerHTML = `
+          <div style="text-align:center;padding:48px 24px;color:var(--color-text-secondary);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.3;margin:0 auto 16px;display:block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <p>No bookings yet.</p>
+            <p style="font-size:0.82rem;color:var(--color-text-muted);margin-top:8px">Your confirmed bookings will appear here.</p>
+          </div>`;
+        return;
+      }
+
+      const statusCls = { confirmed: 'status-confirmed', completed: 'status-completed', cancelled: 'status-cancelled' };
+
+      body.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px;padding-bottom:8px;">
+        ${orders.map((o) => {
+          const appt    = o.appointment || {};
+          const items   = (o.items || []).map((i) => i.title).join(', ');
+          const cls     = statusCls[o.status || 'confirmed'] || 'status-confirmed';
+          const date    = o.createdAt?.toDate?.().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) || '—';
+          return `
+            <div style="background:var(--gradient-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;">
+                <div>
+                  <div style="font-weight:700;font-size:0.92rem;margin-bottom:2px">${appt.date || '—'} · ${appt.timeSlot || '—'}</div>
+                  <div style="font-size:0.75rem;color:var(--color-text-muted)">Booked on ${date}</div>
+                </div>
+                <span class="status-badge ${cls}">${o.status || 'confirmed'}</span>
+              </div>
+              <div style="font-size:0.82rem;color:var(--color-text-secondary);margin-bottom:8px;line-height:1.5">${items || '—'}</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:0.78rem;color:var(--color-text-muted)">${o.customer?.address || ''}</span>
+                <span style="font-weight:700;color:var(--color-gold)">₹${(o.total || 0).toLocaleString('en-IN')}</span>
+              </div>
+              ${o.stylistName ? `<div style="font-size:0.75rem;color:var(--color-accent-primary);margin-top:6px">Staff: ${o.stylistName}</div>` : ''}
+            </div>`;
+        }).join('')}
+      </div>`;
+    } catch (err) {
+      console.error(err);
+      body.innerHTML = `<p style="color:var(--color-red);padding:24px;text-align:center;font-size:0.85rem">Failed to load bookings. Check Firestore permissions.</p>`;
+    }
+  }
+
+  document.getElementById('history-modal-close').addEventListener('click', () => {
+    historyOverlay.classList.remove('active');
+    document.body.classList.remove('modal-open');
+  });
+  historyOverlay.addEventListener('click', (e) => {
+    if (e.target === historyOverlay) {
+      historyOverlay.classList.remove('active');
+      document.body.classList.remove('modal-open');
     }
   });
 
