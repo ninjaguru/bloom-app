@@ -261,7 +261,7 @@ export function setupRecommender(getCurrentGender, getCachedServices, addToCartF
   }
 
   // Event listeners
-  document.getElementById('rec-open-btn').addEventListener('click', open);
+  document.getElementById('rec-open-btn')?.addEventListener('click', open);
   document.getElementById('rec-close').addEventListener('click', close);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 }

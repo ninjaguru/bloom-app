@@ -436,20 +436,6 @@ img {
   color: var(--color-text-primary);
 }
 
-.gender-photo {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid transparent;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.gender-btn.active .gender-photo {
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 0 2px var(--color-accent-primary);
-}
 
 .gender-slider {
   position: absolute;
