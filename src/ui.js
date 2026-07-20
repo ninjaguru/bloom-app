@@ -91,7 +91,10 @@ function calcDiscountPercent(original, current) {
 /* =============================================
    RENDER SERVICE CARDS
    ============================================= */
+let _servicesSnapshot = [];
+
 export function renderServices(services) {
+  _servicesSnapshot = services;
   const grid = document.getElementById('services-grid');
   const loading = document.getElementById('services-loading');
   const empty = document.getElementById('services-empty');
@@ -254,24 +257,33 @@ function openServiceModal(service) {
           </div>`;
       })() : ''}
 
-      ${service.procedureSteps && service.procedureSteps.length > 0 ? `
-        <div class="procedure-steps">
-          <h3 class="modal-section-title">Procedure</h3>
-          <div class="procedure-grid">
-            ${service.procedureSteps
-              .sort((a, b) => a.step - b.step)
-              .map((step) => `
-                <div class="procedure-step">
-                  <div class="procedure-step-img-wrap">
-                    <img src="${getRitualStepImage(step.title)}" alt="${step.title}" loading="lazy" />
-                    <span class="procedure-step-num">${step.step}</span>
-                  </div>
-                  <h4>${step.title}</h4>
-                </div>
-              `).join('')}
-          </div>
-        </div>
-      ` : ''}
+      ${(() => {
+        const related = _servicesSnapshot.filter(
+          (s) => s.category === service.category && (s.serviceId || s.id) !== serviceId
+        ).slice(0, 3);
+        if (!related.length) return '';
+        return `
+          <div class="related-services">
+            <h3 class="modal-section-title">Related Services</h3>
+            <div class="related-services-list">
+              ${related.map((rel) => {
+                const relId = rel.serviceId || rel.id;
+                const inCart = isInCart(relId);
+                return `
+                  <div class="related-card" data-related-id="${relId}">
+                    <img class="related-card-img" src="${getServiceImage(rel)}" alt="${rel.title}" loading="lazy" />
+                    <div class="related-card-info">
+                      <p class="related-card-title">${rel.title}</p>
+                      <span class="related-card-price">${formatPrice(rel.price)}</span>
+                    </div>
+                    <button class="add-to-cart-btn ${inCart ? 'added' : ''}" data-action="add-related" data-service-id="${relId}">
+                      ${inCart ? '✓' : '+'}
+                    </button>
+                  </div>`;
+              }).join('')}
+            </div>
+          </div>`;
+      })()}
     </div>
 
     <div class="modal-footer">
@@ -330,6 +342,25 @@ function openServiceModal(service) {
       cardBtn.classList.add('added');
       cardBtn.innerHTML = '✓ Added';
     }
+  });
+
+  // Related services
+  body.querySelectorAll('.related-card').forEach((card) => {
+    const relId = card.dataset.relatedId;
+    const relSvc = _servicesSnapshot.find((s) => (s.serviceId || s.id) === relId);
+
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('[data-action="add-related"]')) return;
+      if (relSvc) openServiceModal(relSvc);
+    });
+
+    card.querySelector('[data-action="add-related"]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!relSvc) return;
+      addToCart(relSvc);
+      e.currentTarget.classList.add('added');
+      e.currentTarget.innerHTML = '✓';
+    });
   });
 }
 
