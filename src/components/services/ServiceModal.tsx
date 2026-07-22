@@ -219,6 +219,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
               variant={isInCart ? 'secondary' : 'primary'}
               onClick={() => {
                 addToCart(service);
+                onClose();
               }}
             >
               {isInCart ? (

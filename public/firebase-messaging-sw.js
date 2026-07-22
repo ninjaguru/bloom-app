@@ -14,7 +14,7 @@ const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
   const { title, body } = payload.notification || {};
-  self.registration.showNotification(title || 'Bloom Salon', {
+  self.registration.showNotification(title || 'Bloom at Home', {
     body: body || '',
     icon: '/favicon.svg',
     badge: '/favicon.svg',

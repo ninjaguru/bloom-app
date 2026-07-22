@@ -145,7 +145,7 @@ export function buildWhatsAppMessage({
     .join('\n');
 
   const lines = [
-    '🌿 *New Bloom Salon Booking*',
+    '🌿 *New Bloom at Home Booking*',
     '',
     `*Customer:* ${name}`,
     `*Phone:* ${phone}`,

@@ -32,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Flower className="w-5 h-5 animate-pulse" />
           </div>
           <span className="text-xl font-bold tracking-tight text-white font-outfit">
-            Bloom<span className="text-pink-400">Salon</span>
+            Bloom<span className="text-pink-400"> at Home</span>
           </span>
         </div>
 
