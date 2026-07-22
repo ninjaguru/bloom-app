@@ -8,7 +8,7 @@ import { getToken } from 'firebase/messaging';
 const esc = (s) => (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 // Replace with key from Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
-const VAPID_KEY = 'YOUR_VAPID_KEY';
+const VAPID_KEY = 'BCkA99p12XHsrAwH817M6fZl3Vln2aJlvpt-CpAc9ok1G4Z0oQe1c6F_yw2MfezDM2dNmX2Uedseyvc2ZZ8MqZc';
 
 export async function requestNotificationPermission(uid) {
   if (!('Notification' in window)) return;
