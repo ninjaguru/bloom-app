@@ -2090,3 +2090,61 @@ img {
     border-radius: 0;
   }
 }
+
+/* ===== SEARCH (KokonutUI Action Search Bar inspired) ===== */
+.search-section {
+  padding: 0 0 8px;
+}
+.search-wrap {
+  position: relative;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  transition: color 0.2s;
+}
+.search-input {
+  width: 100%;
+  padding: 11px 52px 11px 44px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.search-input:focus {
+  border-color: var(--color-border-hover);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.08);
+}
+.search-input:focus + .search-kbd { opacity: 0; }
+.search-input::placeholder { color: var(--color-text-muted); }
+.search-input::-webkit-search-cancel-button { cursor: pointer; }
+.search-input:focus ~ .search-icon { color: var(--color-accent-primary); }
+.search-kbd {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  padding: 2px 6px;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+@media (max-width: 480px) { .search-kbd { display: none; } }

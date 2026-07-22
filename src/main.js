@@ -3,11 +3,13 @@ import { renderServices, renderCategories, setupGlobalListeners, setupLoginModal
 import { setupBookingListeners } from './booking.js';
 import { setupRecommender } from './recommender.js';
 import { addToCart } from './cart.js';
+import { filterServices, debounce } from './search.js';
 
 /* ---------- App State ---------- */
 let currentGender = 'women';
 let currentCategory = 'All';
 let cachedServices = [];
+let searchQuery = '';
 
 /* ---------- Load Services ---------- */
 function loadServices() {
@@ -29,7 +31,7 @@ function loadServices() {
       } catch { /* bundles optional */ }
     }
     cachedServices = displayed;
-    renderServices(displayed);
+    renderServices(filterServices(cachedServices, searchQuery));
   });
 }
 
@@ -38,6 +40,9 @@ async function loadCategories() {
   const categories = await getCategories(currentGender);
 
   function handleCategorySelect(selected) {
+    searchQuery = '';
+    const si = document.getElementById('search-input');
+    if (si) si.value = '';
     currentCategory = selected;
     loadServices();
     renderCategories(categories, currentCategory, handleCategorySelect);
@@ -55,6 +60,9 @@ function setupGenderToggle() {
   function switchGender(gender) {
     currentGender = gender;
     currentCategory = 'All';
+    searchQuery = '';
+    const si = document.getElementById('search-input');
+    if (si) si.value = '';
 
     // Update UI
     womenBtn.classList.toggle('active', gender === 'women');
@@ -70,6 +78,26 @@ function setupGenderToggle() {
   menBtn.addEventListener('click', () => switchGender('men'));
 }
 
+/* ---------- Search ---------- */
+function setupSearch() {
+  const input = document.getElementById('search-input');
+  if (!input) return;
+  const handleSearch = debounce((query) => {
+    searchQuery = query;
+    renderServices(filterServices(cachedServices, searchQuery));
+  }, 200);
+  input.addEventListener('input', (e) => handleSearch(e.target.value));
+
+  // ⌘K / Ctrl+K focus shortcut
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      input.focus();
+      input.select();
+    }
+  });
+}
+
 /* ---------- Initialize App ---------- */
 function init() {
   setupGlobalListeners();
@@ -81,6 +109,7 @@ function init() {
     addToCart,
   );
   setupGenderToggle();
+  setupSearch();
   loadCategories();
   loadServices();
 }
