@@ -506,6 +506,82 @@ function barRow(label, value, max, displayVal) {
    ================================================================ */
 let _editingDocId = null; // null = add mode, string = edit mode
 
+function createRitualStepRow(step = {}) {
+  const div = document.createElement('div');
+  div.className = 'ritual-step-row';
+  div.style.cssText = 'background:rgba(255,255,255,0.03);border:1px solid var(--color-border);padding:10px;border-radius:8px;display:flex;flex-direction:column;gap:8px;position:relative;';
+
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:0.75rem;font-weight:600;color:var(--color-text-secondary);" class="step-num-label">Step</span>
+      <button type="button" class="remove-step-btn" style="background:none;border:none;color:var(--color-red);cursor:pointer;font-size:0.8rem;">✕ Remove</button>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;">
+      <input class="svc-input step-title" type="text" placeholder="Step Title (e.g. Cleansing & Exfoliation)" value="${(step.title || '').replace(/"/g, '&quot;')}" />
+      <input class="svc-input step-duration" type="number" min="0" placeholder="Min" value="${step.durationMinutes || ''}" />
+    </div>
+    <input class="svc-input step-img" type="url" placeholder="Step Picture URL (https://…)" value="${(step.imageUrl || '').replace(/"/g, '&quot;')}" />
+    <textarea class="svc-input step-desc" rows="2" placeholder="Step Description / Procedure details..." style="resize:vertical;">${step.description || ''}</textarea>
+  `;
+
+  div.querySelector('.remove-step-btn').addEventListener('click', () => {
+    div.remove();
+    updateRitualStepNumbers();
+  });
+
+  return div;
+}
+
+function updateRitualStepNumbers() {
+  const container = document.getElementById('ritual-steps-container');
+  if (!container) return;
+  const rows = container.querySelectorAll('.ritual-step-row');
+  rows.forEach((row, index) => {
+    const label = row.querySelector('.step-num-label');
+    if (label) label.textContent = `Step ${index + 1}`;
+  });
+}
+
+function populateRitualSteps(steps = []) {
+  const container = document.getElementById('ritual-steps-container');
+  if (!container) return;
+  container.innerHTML = '';
+  if (steps && steps.length > 0) {
+    steps.forEach((s) => container.appendChild(createRitualStepRow(s)));
+  }
+  updateRitualStepNumbers();
+}
+
+function collectRitualSteps() {
+  const container = document.getElementById('ritual-steps-container');
+  if (!container) return [];
+  const rows = container.querySelectorAll('.ritual-step-row');
+  const steps = [];
+  rows.forEach((row) => {
+    const title = row.querySelector('.step-title')?.value.trim();
+    const durationMinutes = parseInt(row.querySelector('.step-duration')?.value, 10) || 0;
+    const imageUrl = row.querySelector('.step-img')?.value.trim() || '';
+    const description = row.querySelector('.step-desc')?.value.trim() || '';
+    if (title) {
+      steps.push({
+        title,
+        description,
+        durationMinutes,
+        imageUrl,
+      });
+    }
+  });
+  return steps;
+}
+
+document.getElementById('add-ritual-step-btn')?.addEventListener('click', () => {
+  const container = document.getElementById('ritual-steps-container');
+  if (container) {
+    container.appendChild(createRitualStepRow());
+    updateRitualStepNumbers();
+  }
+});
+
 function getFormData() {
   return {
     title:           document.getElementById('svc-title').value.trim(),
@@ -516,6 +592,7 @@ function getFormData() {
     durationMinutes: parseInt(document.getElementById('svc-duration').value, 10)       || 0,
     rating:          parseFloat(document.getElementById('svc-rating').value)           || 4.8,
     imageUrl:        document.getElementById('svc-image').value.trim(),
+    ritualSteps:     collectRitualSteps(),
   };
 }
 
@@ -533,6 +610,7 @@ function openServiceEditModal(svc) {
   document.getElementById('svc-error').textContent        = '';
   document.getElementById('svc-delete').style.display     = 'inline-flex';
   document.getElementById('svc-save').textContent         = 'Save Changes';
+  populateRitualSteps(svc.ritualSteps || []);
   document.getElementById('svc-overlay').classList.add('open');
 }
 
@@ -550,6 +628,7 @@ function openServiceAddModal() {
   document.getElementById('svc-error').textContent        = '';
   document.getElementById('svc-delete').style.display     = 'none';
   document.getElementById('svc-save').textContent         = 'Add Service';
+  populateRitualSteps([]);
   document.getElementById('svc-overlay').classList.add('open');
 }
 
@@ -591,7 +670,7 @@ document.getElementById('svc-save').addEventListener('click', async () => {
     } else {
       // CREATE
       const serviceId = `svc-${Date.now()}`;
-      const newSvc    = { ...data, serviceId, reviewCount: 0, ritualSteps: [], procedureSteps: [] };
+      const newSvc    = { ...data, serviceId, reviewCount: 0, procedureSteps: [] };
       const ref       = await addDoc(collection(db, 'services'), newSvc);
       allServices.push({ id: ref.id, ...newSvc });
       showToast('Service added');
