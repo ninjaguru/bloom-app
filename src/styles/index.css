@@ -2132,7 +2132,7 @@ img {
 .search-input:focus + .search-kbd { opacity: 0; }
 .search-input::placeholder { color: var(--color-text-muted); }
 .search-input::-webkit-search-cancel-button { cursor: pointer; }
-.search-input:focus ~ .search-icon { color: var(--color-accent-primary); }
+.search-wrap:focus-within .search-icon { color: var(--color-accent-primary); }
 .search-kbd {
   position: absolute;
   right: 14px;
