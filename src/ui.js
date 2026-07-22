@@ -9,7 +9,8 @@ import {
   clearCoupon,
 } from './cart.js';
 import { openBookingModal } from './booking.js';
-import { signInWithGoogle, logout, onAuthChange, getCurrentUser, saveProfile, loadProfile } from './auth.js';
+import { signInWithGoogle, logout, onAuthChange, getCurrentUser, saveProfile, loadProfile, onSignIn } from './auth.js';
+import { ensureReferralCode, getReferralShareUrl } from './referral.js';
 import { db } from './firebase.js';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 
@@ -264,7 +265,7 @@ function openServiceModal(service) {
         if (!related.length) return '';
         return `
           <div class="related-services">
-            <h3 class="modal-section-title">Related Services</h3>
+            <h3 class="modal-section-title">Customers also bought</h3>
             <div class="related-services-list">
               ${related.map((rel) => {
                 const relId = rel.serviceId || rel.id;
@@ -608,6 +609,46 @@ export function setupLoginModal() {
       }
     } catch (err) { console.error(err); }
 
+    // Referral section
+    const referralSection = document.getElementById('profile-referral-section');
+    if (referralSection) {
+      try {
+        const code = await ensureReferralCode(user.uid);
+        const shareUrl = getReferralShareUrl(code);
+        const waMsg = encodeURIComponent(
+          `Use my code ${code} to get ₹200 off your first Bloom Salon booking! ${shareUrl}`
+        );
+        referralSection.innerHTML = `
+          <h3 class="booking-section-title">Refer a Friend</h3>
+          <p class="referral-desc">Share your code — when a friend books their first appointment, you get <strong>₹200 off</strong> yours.</p>
+          <div class="referral-code-box">
+            <span class="referral-code">${code}</span>
+            <button class="referral-copy-btn" id="referral-copy-btn">Copy link</button>
+          </div>
+          <a class="referral-wa-btn" href="https://wa.me/?text=${waMsg}" target="_blank" rel="noopener">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.122.553 4.103 1.518 5.82L0 24l6.337-1.493A11.954 11.954 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.365l-.359-.213-3.728.879.892-3.636-.234-.374A9.818 9.818 0 1 1 12 21.818z"/></svg>
+            Share on WhatsApp
+          </a>`;
+        document.getElementById('referral-copy-btn')?.addEventListener('click', async () => {
+          const btn = document.getElementById('referral-copy-btn');
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            btn.textContent = 'Copied!';
+          } catch {
+            const inp = Object.assign(document.createElement('input'), { value: shareUrl });
+            document.body.appendChild(inp);
+            inp.select();
+            document.execCommand('copy');
+            document.body.removeChild(inp);
+            btn.textContent = 'Copied!';
+          }
+          setTimeout(() => { if (btn) btn.textContent = 'Copy link'; }, 2000);
+        });
+      } catch (err) {
+        console.warn('Referral section error:', err);
+      }
+    }
+
     profileOverlay.classList.add('active');
     document.body.classList.add('modal-open');
   }
@@ -818,6 +859,8 @@ export function setupLoginModal() {
     errorEl.textContent = '';
     try {
       await signInWithGoogle();
+      const signedInUser = getCurrentUser();
+      if (signedInUser) onSignIn(signedInUser.uid).catch(() => {});
       closeLogin();
       showToast('Signed in with Google!');
     } catch (err) {

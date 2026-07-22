@@ -1,4 +1,5 @@
 import { db } from './firebase.js';
+import { triggerReferralReward } from './referral.js';
 import { getAuth } from 'firebase/auth';
 import {
   collection, addDoc, serverTimestamp,
@@ -189,6 +190,7 @@ export async function checkout(bookingDetails = {}) {
 
   clearCart();
   clearCoupon();
+  triggerReferralReward(orderData.customerUid).catch(() => {});
 
   return docRef.id;
 }

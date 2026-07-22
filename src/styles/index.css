@@ -2148,3 +2148,65 @@ img {
   transition: opacity 0.15s;
 }
 @media (max-width: 480px) { .search-kbd { display: none; } }
+
+/* ===== REFERRAL (KokonutUI glass card aesthetic) ===== */
+.referral-desc {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 14px;
+  line-height: 1.55;
+}
+.referral-desc strong { color: var(--color-gold); }
+.referral-code-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.referral-code {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-accent-primary);
+  letter-spacing: 2px;
+  flex: 1;
+}
+.referral-copy-btn {
+  background: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.referral-copy-btn:hover {
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+}
+.referral-wa-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  background: rgba(37, 211, 102, 0.08);
+  border: 1px solid rgba(37, 211, 102, 0.25);
+  border-radius: var(--radius-md);
+  color: #25d366;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.referral-wa-btn:hover {
+  background: rgba(37, 211, 102, 0.14);
+  color: #25d366;
+}

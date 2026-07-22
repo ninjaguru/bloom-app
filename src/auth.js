@@ -1,4 +1,5 @@
 import { auth, db } from './firebase.js';
+import { ensureReferralCode, attributeReferral } from './referral.js';
 import {
   GoogleAuthProvider,
   signInWithPopup,
@@ -35,4 +36,9 @@ export async function saveProfile(uid, data) {
 export async function loadProfile(uid) {
   const snap = await getDoc(doc(db, 'customers', uid));
   return snap.exists() ? snap.data() : null;
+}
+
+export async function onSignIn(uid) {
+  await ensureReferralCode(uid);
+  await attributeReferral(uid);
 }

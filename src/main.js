@@ -1,4 +1,5 @@
 import { subscribeToServices, getCategories, getBundles } from './services.js';
+import { captureRefParam } from './referral.js';
 import { renderServices, renderCategories, setupGlobalListeners, setupLoginModal, closeCart, showToast } from './ui.js';
 import { setupBookingListeners } from './booking.js';
 import { setupRecommender } from './recommender.js';
@@ -100,6 +101,7 @@ function setupSearch() {
 
 /* ---------- Initialize App ---------- */
 function init() {
+  captureRefParam();
   setupGlobalListeners();
   setupLoginModal();
   setupBookingListeners({ closeCart, showToast });
