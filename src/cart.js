@@ -1,5 +1,6 @@
 import { db } from './firebase.js';
 import { triggerReferralReward } from './referral.js';
+import { writeBookingNotification } from './notifications.js';
 import { getAuth } from 'firebase/auth';
 import {
   collection, addDoc, serverTimestamp,
@@ -191,6 +192,16 @@ export async function checkout(bookingDetails = {}) {
   clearCart();
   clearCoupon();
   triggerReferralReward(orderData.customerUid).catch(() => {});
+
+  if (orderData.customerUid) {
+    const serviceList = orderData.items.map((i) => i.title).join(', ');
+    const appt = orderData.appointment || {};
+    writeBookingNotification(
+      orderData.customerUid,
+      'Booking Confirmed ✓',
+      `${serviceList} · ${appt.date || ''} ${appt.timeSlot || ''}`.trim()
+    ).catch(() => {});
+  }
 
   return docRef.id;
 }

@@ -11,6 +11,7 @@ import {
 import { openBookingModal } from './booking.js';
 import { signInWithGoogle, logout, onAuthChange, getCurrentUser, saveProfile, loadProfile, onSignIn } from './auth.js';
 import { ensureReferralCode, getReferralShareUrl } from './referral.js';
+import { initNotificationBell, showNotificationBanner } from './notifications.js';
 import { db } from './firebase.js';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 
@@ -846,7 +847,19 @@ export function setupLoginModal() {
   });
 
   /* ---- Google sign-in ---- */
-  onAuthChange((user) => updateLoginHeader(user));
+  let _notifUnsubscribe = null;
+  onAuthChange((user) => {
+    updateLoginHeader(user);
+    const bellWrap = document.getElementById('notif-bell-wrap');
+    if (user) {
+      if (bellWrap) bellWrap.style.display = 'block';
+      if (_notifUnsubscribe) _notifUnsubscribe();
+      _notifUnsubscribe = initNotificationBell(user.uid);
+    } else {
+      if (bellWrap) bellWrap.style.display = 'none';
+      if (_notifUnsubscribe) { _notifUnsubscribe(); _notifUnsubscribe = null; }
+    }
+  });
 
   document.getElementById('login-modal-close').addEventListener('click', closeLogin);
   loginOverlay.addEventListener('click', (e) => { if (e.target === loginOverlay) closeLogin(); });
@@ -863,6 +876,7 @@ export function setupLoginModal() {
       if (signedInUser) onSignIn(signedInUser.uid).catch(() => {});
       closeLogin();
       showToast('Signed in with Google!');
+      if (signedInUser) showNotificationBanner(signedInUser.uid);
     } catch (err) {
       console.error('Google sign-in error:', err.code, err.message);
       errorEl.textContent = err.code === 'auth/popup-closed-by-user'
