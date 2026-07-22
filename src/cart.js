@@ -1,6 +1,7 @@
 import { db } from './firebase.js';
 import { triggerReferralReward } from './referral.js';
 import { writeBookingNotification } from './notifications.js';
+import { earnPoints, spendPoints, pointsToRupees } from './loyalty.js';
 import { getAuth } from 'firebase/auth';
 import {
   collection, addDoc, serverTimestamp,
@@ -13,6 +14,9 @@ const listeners = new Set();
 
 /* ---------- Coupon State ---------- */
 let appliedCoupon = null;
+
+/* ---------- Loyalty State ---------- */
+let loyaltyPointsToRedeem = 0;
 
 /* ---------- Notify Listeners ---------- */
 function notify() {
@@ -53,6 +57,7 @@ export function updateQuantity(serviceId, delta) {
 
 export function clearCart() {
   cartItems.clear();
+  loyaltyPointsToRedeem = 0;
   notify();
 }
 
@@ -83,9 +88,16 @@ export function getCartState() {
     }
   }
 
-  const total = subtotal - discountAmount;
+  const loyaltyDiscount = loyaltyPointsToRedeem > 0 ? pointsToRupees(loyaltyPointsToRedeem) : 0;
+  const total = subtotal - discountAmount - loyaltyDiscount;
 
-  return { items, totalItems, subtotal, discountPercent, discountAmount, total, couponCode, couponType };
+  return {
+    items, totalItems, subtotal,
+    discountPercent, discountAmount, total,
+    couponCode, couponType,
+    loyaltyDiscount,
+    loyaltyPointsToRedeem,
+  };
 }
 
 export function getItemCount() {
@@ -107,6 +119,20 @@ export function getCouponState() {
 export function clearCoupon() {
   appliedCoupon = null;
   notify();
+}
+
+export function applyLoyaltyPoints(points) {
+  loyaltyPointsToRedeem = points;
+  notify();
+}
+
+export function clearLoyaltyPoints() {
+  loyaltyPointsToRedeem = 0;
+  notify();
+}
+
+export function getLoyaltyPointsApplied() {
+  return loyaltyPointsToRedeem;
 }
 
 export async function validateAndApplyCoupon(code) {
@@ -156,6 +182,8 @@ export async function checkout(bookingDetails = {}) {
   const state = getCartState();
   if (state.items.length === 0) return null;
 
+  const redeemedPoints = loyaltyPointsToRedeem;
+
   const orderData = {
     items: state.items.map((item) => ({
       serviceId:       item.id,
@@ -166,17 +194,19 @@ export async function checkout(bookingDetails = {}) {
       lineTotal:       item.lineTotal,
       durationMinutes: item.service.durationMinutes || 0,
     })),
-    totalItems:      state.totalItems,
-    subtotal:        state.subtotal,
-    discountPercent: state.discountPercent,
-    discountAmount:  state.discountAmount,
-    couponCode:      state.couponCode || null,
-    total:           state.total,
-    customer:        bookingDetails.customer    || {},
-    appointment:     bookingDetails.appointment || {},
-    status:          'confirmed',
-    createdAt:       serverTimestamp(),
-    customerUid:     getAuth().currentUser?.uid || null,
+    totalItems:              state.totalItems,
+    subtotal:                state.subtotal,
+    discountPercent:         state.discountPercent,
+    discountAmount:          state.discountAmount,
+    couponCode:              state.couponCode || null,
+    loyaltyPointsRedeemed:   loyaltyPointsToRedeem,
+    loyaltyDiscount:         pointsToRupees(loyaltyPointsToRedeem),
+    total:                   state.total,
+    customer:                bookingDetails.customer    || {},
+    appointment:             bookingDetails.appointment || {},
+    status:                  'confirmed',
+    createdAt:               serverTimestamp(),
+    customerUid:             getAuth().currentUser?.uid || null,
   };
 
   const docRef = await addDoc(collection(db, 'orders'), orderData);
@@ -201,6 +231,10 @@ export async function checkout(bookingDetails = {}) {
       'Booking Confirmed ✓',
       `${serviceList} · ${appt.date || ''} ${appt.timeSlot || ''}`.trim()
     ).catch(() => {});
+    earnPoints(orderData.customerUid, docRef.id, orderData.total).catch(() => {});
+    if (redeemedPoints > 0) {
+      spendPoints(orderData.customerUid, docRef.id, redeemedPoints).catch(() => {});
+    }
   }
 
   return docRef.id;

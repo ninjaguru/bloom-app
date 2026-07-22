@@ -164,6 +164,11 @@
         <button class="coupon-apply-btn" id="coupon-apply-btn">Apply</button>
       </div>
       <p class="coupon-status" id="coupon-status"></p>
+      <!-- Loyalty Points Toggle -->
+      <div class="loyalty-toggle-row" id="loyalty-toggle-row" style="display:none;">
+        <div class="loyalty-toggle-info" id="loyalty-toggle-info"></div>
+        <button class="loyalty-use-btn" id="loyalty-use-btn">Use Points</button>
+      </div>
       <div class="cart-discount-info" id="cart-discount-info"></div>
       <div class="cart-summary">
         <div class="cart-row">
@@ -173,6 +178,10 @@
         <div class="cart-row discount-row" id="discount-row" style="display:none;">
           <span>Bundle Discount</span>
           <span class="discount-value" id="cart-discount">-₹0</span>
+        </div>
+        <div class="cart-row discount-row" id="loyalty-discount-row" style="display:none;">
+          <span>Points Discount</span>
+          <span class="discount-value" id="cart-loyalty-discount">-₹0</span>
         </div>
         <div class="cart-row cart-total">
           <span>Total</span>
@@ -307,6 +316,9 @@
           </div>
         </div>
         <div class="booking-section" id="profile-referral-section">
+          <!-- Populated by JS -->
+        </div>
+        <div class="booking-section" id="profile-loyalty-section">
           <!-- Populated by JS -->
         </div>
         <p class="booking-error" id="profile-error"></p>

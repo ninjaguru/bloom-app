@@ -2333,4 +2333,108 @@ img {
   border-color: var(--color-accent-primary);
   color: var(--color-accent-primary);
 }
+
+/* ===== LOYALTY POINTS (KokonutUI glass card aesthetic) ===== */
+.loyalty-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 6px;
+}
+.loyalty-toggle-info {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.loyalty-pts-label {
+  font-weight: 700;
+  color: var(--color-accent-primary);
+  font-size: 0.87rem;
+}
+.loyalty-val-label {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+.loyalty-expiry-badge {
+  font-size: 0.7rem;
+  color: var(--color-red);
+  background: rgba(251, 113, 133, 0.1);
+  border: 1px solid rgba(251, 113, 133, 0.22);
+  border-radius: var(--radius-sm);
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+.loyalty-use-btn {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  padding: 5px 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.loyalty-use-btn:hover,
+.loyalty-use-btn.active {
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+  background: rgba(74, 222, 128, 0.07);
+}
+/* Profile loyalty card — KokonutUI glassmorphism */
+.loyalty-profile-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(74, 222, 128, 0.18);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 10px;
+}
+.loyalty-profile-left { display: flex; flex-direction: column; gap: 3px; }
+.loyalty-profile-pts {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--color-accent-primary);
+  line-height: 1;
+}
+.loyalty-profile-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.loyalty-profile-expiry {
+  font-size: 0.72rem;
+  color: var(--color-red);
+  margin-top: 2px;
+}
+.loyalty-profile-right { text-align: right; }
+.loyalty-profile-value {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--color-gold);
+}
+.loyalty-profile-sublabel {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+.loyalty-profile-note {
+  font-size: 0.73rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
 #notif-allow-btn:hover { background: rgba(74, 222, 128, 0.1); }

@@ -7,7 +7,14 @@ import {
   getCartState,
   validateAndApplyCoupon,
   clearCoupon,
+  applyLoyaltyPoints,
+  clearLoyaltyPoints,
+  getLoyaltyPointsApplied,
 } from './cart.js';
+import {
+  getLoyaltyBalance, canRedeem, pointsToRupees,
+  clampRedeemPoints, getExpiryWarningText,
+} from './loyalty.js';
 import { openBookingModal } from './booking.js';
 import { signInWithGoogle, logout, onAuthChange, getCurrentUser, saveProfile, loadProfile, onSignIn } from './auth.js';
 import { ensureReferralCode, getReferralShareUrl } from './referral.js';
@@ -465,6 +472,24 @@ export function renderCart(state) {
     discountRow.style.display = 'none';
   }
 
+  // Loyalty discount summary row
+  const loyaltyDiscRow = document.getElementById('loyalty-discount-row');
+  if (loyaltyDiscRow) {
+    if (state.loyaltyDiscount > 0) {
+      loyaltyDiscRow.style.display = 'flex';
+      document.getElementById('cart-loyalty-discount').textContent = `-${formatPrice(state.loyaltyDiscount)}`;
+    } else {
+      loyaltyDiscRow.style.display = 'none';
+    }
+  }
+  // Update loyalty toggle button state
+  const loyaltyUseBtn = document.getElementById('loyalty-use-btn');
+  if (loyaltyUseBtn) {
+    const applied = state.loyaltyPointsToRedeem > 0;
+    loyaltyUseBtn.textContent = applied ? 'Remove' : 'Use Points';
+    loyaltyUseBtn.classList.toggle('active', applied);
+  }
+
   document.getElementById('cart-total').textContent = formatPrice(state.total);
 
   // Event delegation for cart actions
@@ -648,6 +673,32 @@ export function setupLoginModal() {
       } catch (err) {
         console.warn('Referral section error:', err);
       }
+    }
+
+    // Loyalty balance in profile
+    const loyaltySection = document.getElementById('profile-loyalty-section');
+    if (loyaltySection) {
+      try {
+        const { available, nextExpiry } = await getLoyaltyBalance(user.uid);
+        const expStr = nextExpiry
+          ? nextExpiry.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+          : null;
+        loyaltySection.innerHTML = `
+          <h3 class="booking-section-title">Loyalty Points</h3>
+          <div class="loyalty-profile-card">
+            <div class="loyalty-profile-left">
+              <div class="loyalty-profile-pts">${available}</div>
+              <div class="loyalty-profile-label">points available</div>
+              ${expStr ? `<div class="loyalty-profile-expiry">Expires ${expStr}</div>` : ''}
+            </div>
+            <div class="loyalty-profile-right">
+              <div class="loyalty-profile-value">≈ ₹${pointsToRupees(available)}</div>
+              <div class="loyalty-profile-sublabel">redeemable</div>
+            </div>
+          </div>
+          <p class="loyalty-profile-note">Earn 1 pt per ₹10 · 100 pts = ₹50 off · Expire in 30 days</p>
+        `;
+      } catch { /* silent */ }
     }
 
     profileOverlay.classList.add('active');
@@ -851,13 +902,17 @@ export function setupLoginModal() {
   onAuthChange((user) => {
     updateLoginHeader(user);
     const bellWrap = document.getElementById('notif-bell-wrap');
+    const loyaltyRow = document.getElementById('loyalty-toggle-row');
     if (user) {
       if (bellWrap) bellWrap.style.display = 'block';
       if (_notifUnsubscribe) _notifUnsubscribe();
       _notifUnsubscribe = initNotificationBell(user.uid);
+      setupLoyaltyRow(user.uid).catch(() => {});
     } else {
       if (bellWrap) bellWrap.style.display = 'none';
+      if (loyaltyRow) loyaltyRow.style.display = 'none';
       if (_notifUnsubscribe) { _notifUnsubscribe(); _notifUnsubscribe = null; }
+      clearLoyaltyPoints();
     }
   });
 
@@ -887,6 +942,44 @@ export function setupLoginModal() {
       btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-8 20-19.3 0-1.3-.1-2.5-.4-3.7z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.4-5L31.3 33c-2 1.4-4.5 2.2-7.3 2.2-5.2 0-9.6-3.5-11.2-8.3l-6.5 5C9.9 39.3 16.4 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.2-2.3 4.1-4.3 5.4l6.1 5c3.7-3.4 5.9-8.4 5.9-14.1 0-1.3-.1-2.5-.4-3.7z"/></svg> Continue with Google`;
     }
   });
+}
+
+/* =============================================
+   LOYALTY ROW
+   ============================================= */
+export async function setupLoyaltyRow(uid) {
+  const row  = document.getElementById('loyalty-toggle-row');
+  const info = document.getElementById('loyalty-toggle-info');
+  const btn  = document.getElementById('loyalty-use-btn');
+  if (!row || !uid) return;
+
+  try {
+    const { available, nextExpiry } = await getLoyaltyBalance(uid);
+    if (!canRedeem(available)) {
+      row.style.display = 'none';
+      return;
+    }
+    const redeemable = clampRedeemPoints(available);
+    const rupees     = pointsToRupees(redeemable);
+    const warning    = getExpiryWarningText(nextExpiry);
+
+    info.innerHTML = `
+      <span class="loyalty-pts-label">${available} pts</span>
+      <span class="loyalty-val-label">≈ ₹${rupees} off</span>
+      ${warning ? `<span class="loyalty-expiry-badge">${warning}</span>` : ''}
+    `;
+    row.style.display = 'flex';
+
+    btn.onclick = () => {
+      if (getLoyaltyPointsApplied() > 0) {
+        clearLoyaltyPoints();
+      } else {
+        applyLoyaltyPoints(redeemable);
+      }
+    };
+  } catch (err) {
+    console.warn('setupLoyaltyRow failed:', err);
+  }
 }
 
 /* =============================================
