@@ -1,11 +1,12 @@
-import { db } from './firebase.js';
+import { db } from './firebase';
 import {
   doc, getDoc, setDoc, updateDoc, addDoc,
   collection, getDocs, query, where,
   serverTimestamp, arrayUnion,
 } from 'firebase/firestore';
+import { CustomerProfile } from '../types';
 
-export function generateReferralCode() {
+export function generateReferralCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let code = 'BLOOM-';
   for (let i = 0; i < 6; i++) {
@@ -14,17 +15,17 @@ export function generateReferralCode() {
   return code;
 }
 
-export async function ensureReferralCode(uid) {
+export async function ensureReferralCode(uid: string): Promise<string> {
   const ref = doc(db, 'customers', uid);
   const snap = await getDoc(ref);
-  const existing = snap.exists() ? snap.data().referralCode : null;
+  const existing = snap.exists() ? (snap.data() as CustomerProfile).referralCode : null;
   if (existing) return existing;
   const code = generateReferralCode();
   await setDoc(ref, { referralCode: code }, { merge: true });
   return code;
 }
 
-export function captureRefParam() {
+export function captureRefParam(): void {
   const params = new URLSearchParams(window.location.search);
   const ref = params.get('ref');
   if (ref) {
@@ -35,7 +36,7 @@ export function captureRefParam() {
   }
 }
 
-export async function attributeReferral(uid) {
+export async function attributeReferral(uid: string): Promise<void> {
   const pending = sessionStorage.getItem('pendingRef');
   if (!pending) return;
   if (!/^BLOOM-[A-Z0-9]{6}$/.test(pending)) {
@@ -44,18 +45,18 @@ export async function attributeReferral(uid) {
   }
   const ref = doc(db, 'customers', uid);
   const snap = await getDoc(ref);
-  if (snap.exists() && snap.data().referredBy) return;
+  if (snap.exists() && (snap.data() as CustomerProfile).referredBy) return;
   await setDoc(ref, { referredBy: pending }, { merge: true });
   sessionStorage.removeItem('pendingRef');
 }
 
-export async function triggerReferralReward(customerUid) {
+export async function triggerReferralReward(customerUid: string): Promise<void> {
   if (!customerUid) return;
   try {
     const ref = doc(db, 'customers', customerUid);
     const snap = await getDoc(ref);
     if (!snap.exists()) return;
-    const data = snap.data();
+    const data = snap.data() as CustomerProfile;
     if (!data.referredBy || data.firstOrderRewarded) return;
 
     const referrersSnap = await getDocs(
@@ -85,6 +86,6 @@ export async function triggerReferralReward(customerUid) {
   }
 }
 
-export function getReferralShareUrl(code) {
+export function getReferralShareUrl(code: string): string {
   return `${window.location.origin}/?ref=${code}`;
 }

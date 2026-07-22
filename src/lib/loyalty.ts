@@ -1,17 +1,22 @@
-import { db } from './firebase.js';
+import { db } from './firebase';
 import {
   collection, addDoc, getDocs, query, orderBy,
   serverTimestamp, Timestamp,
 } from 'firebase/firestore';
 
-const EARN_RATE        = 10;   // ₹10 = 1 point
-const REDEEM_RATE      = 100;  // 100 points = ₹50
-const REDEEM_VALUE     = 50;   // ₹ per 100 points
-const MAX_REDEEM_POINTS = 500; // cap per order
-const MIN_REDEEM_POINTS = 100; // minimum to redeem
-const EXPIRY_DAYS      = 30;
+export const EARN_RATE        = 10;   // ₹10 = 1 point
+export const REDEEM_RATE      = 100;  // 100 points = ₹50
+export const REDEEM_VALUE     = 50;   // ₹ per 100 points
+export const MAX_REDEEM_POINTS = 500; // cap per order
+export const MIN_REDEEM_POINTS = 100; // minimum to redeem
+export const EXPIRY_DAYS      = 30;
 
-export async function getLoyaltyBalance(uid) {
+export interface LoyaltyBalanceResult {
+  available: number;
+  nextExpiry: Date | null;
+}
+
+export async function getLoyaltyBalance(uid: string): Promise<LoyaltyBalanceResult> {
   if (!uid) return { available: 0, nextExpiry: null };
   try {
     const snap = await getDocs(
@@ -20,8 +25,8 @@ export async function getLoyaltyBalance(uid) {
     const now = new Date();
     let earned = 0;
     let spent = 0;
-    let nextExpiry = null;
-    let earliestNonExpiredEarnDate = null;
+    let nextExpiry: Date | null = null;
+    let earliestNonExpiredEarnDate: Date | null = null;
 
     snap.docs.forEach((d) => {
       const t = d.data();
@@ -55,7 +60,7 @@ export async function getLoyaltyBalance(uid) {
   }
 }
 
-export async function earnPoints(uid, orderId, totalPaid) {
+export async function earnPoints(uid: string, orderId: string, totalPaid: number): Promise<void> {
   if (!uid || !totalPaid) return;
   const points = Math.floor(totalPaid / EARN_RATE);
   if (points <= 0) return;
@@ -74,7 +79,7 @@ export async function earnPoints(uid, orderId, totalPaid) {
   }
 }
 
-export async function spendPoints(uid, orderId, points) {
+export async function spendPoints(uid: string, orderId: string, points: number): Promise<void> {
   if (!uid || points <= 0) return;
   try {
     await addDoc(collection(db, 'customers', uid, 'loyaltyTransactions'), {
@@ -89,21 +94,21 @@ export async function spendPoints(uid, orderId, points) {
   }
 }
 
-export function pointsToRupees(points) {
+export function pointsToRupees(points: number): number {
   return Math.floor(points / REDEEM_RATE) * REDEEM_VALUE;
 }
 
-export function clampRedeemPoints(points) {
+export function clampRedeemPoints(points: number): number {
   const floored = Math.floor(points / REDEEM_RATE) * REDEEM_RATE;
   return Math.min(floored, MAX_REDEEM_POINTS);
 }
 
-export function canRedeem(available) {
+export function canRedeem(available: number): boolean {
   return available >= MIN_REDEEM_POINTS;
 }
 
-export function getExpiryWarningText(nextExpiry) {
+export function getExpiryWarningText(nextExpiry: Date | null): string | null {
   if (!nextExpiry) return null;
-  const daysLeft = Math.ceil((nextExpiry - new Date()) / (1000 * 60 * 60 * 24));
+  const daysLeft = Math.ceil((nextExpiry.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   return daysLeft <= 7 ? `Expires in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}` : null;
 }

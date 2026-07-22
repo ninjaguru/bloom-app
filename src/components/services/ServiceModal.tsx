@@ -1,0 +1,153 @@
+import React from 'react';
+import { X, Clock, Star, Plus, Check, Sparkles } from 'lucide-react';
+import { Service } from '../../types';
+import { GradientButton } from '../ui/GradientButton';
+import { useCartStore } from '../../stores/cartStore';
+
+interface ServiceModalProps {
+  service: Service | null;
+  onClose: () => void;
+}
+
+export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) => {
+  const addToCart = useCartStore((s) => s.addToCart);
+  const cartItems = useCartStore((s) => s.items);
+
+  if (!service) return null;
+
+  const key = service.serviceId || service.id;
+  const isInCart = Boolean(cartItems[key]);
+  const cartQuantity = cartItems[key]?.quantity || 0;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/70 backdrop-blur-md transition-opacity animate-in fade-in"
+        onClick={onClose}
+      />
+
+      {/* Modal Content */}
+      <div className="relative z-10 w-full max-w-xl rounded-3xl bg-slate-900 border border-slate-800 text-slate-100 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        {/* Header Image or Gradient */}
+        <div className="relative h-48 sm:h-56 w-full bg-gradient-to-tr from-slate-950 via-slate-900 to-pink-950/40">
+          {service.imageUrl ? (
+            <img
+              src={service.imageUrl}
+              alt={service.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-pink-500/30">
+              <Sparkles className="w-20 h-20" />
+            </div>
+          )}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 rounded-full bg-black/60 p-2 text-white hover:bg-black transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content Body */}
+        <div className="p-6 sm:p-8 space-y-6">
+          <div>
+            <div className="flex items-center space-x-2 mb-2">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">
+                {service.category}
+              </span>
+              {service.isBundle && (
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  Bundle Deal
+                </span>
+              )}
+            </div>
+
+            <h2 className="text-2xl font-bold text-white font-outfit mb-2">
+              {service.title}
+            </h2>
+
+            <div className="flex items-center space-x-4 text-xs text-slate-400">
+              <div className="flex items-center space-x-1">
+                <Clock className="w-4 h-4 text-slate-500" />
+                <span>{service.durationMinutes} minutes</span>
+              </div>
+              {service.rating > 0 && (
+                <div className="flex items-center space-x-1 text-amber-400 font-semibold">
+                  <Star className="w-4 h-4 fill-current" />
+                  <span>{service.rating.toFixed(1)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {service.description && (
+            <p className="text-sm text-slate-300 font-light leading-relaxed">
+              {service.description}
+            </p>
+          )}
+
+          {/* Ritual Steps */}
+          {service.ritualSteps && service.ritualSteps.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-pink-400">
+                Service Ritual & Procedure
+              </h4>
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                {service.ritualSteps.map((step, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start space-x-3 p-3 rounded-2xl bg-slate-850 border border-slate-800/80"
+                  >
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 text-pink-300 text-xs font-bold flex items-center justify-center">
+                      {idx + 1}
+                    </span>
+                    <div>
+                      <h5 className="text-sm font-semibold text-white">{step.title}</h5>
+                      {step.description && (
+                        <p className="text-xs text-slate-400 font-light mt-0.5">
+                          {step.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pricing & Add to Cart Footer */}
+          <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+            <div>
+              <span className="text-xs text-slate-400 block">Total Price</span>
+              <span className="text-2xl font-extrabold text-white">
+                ₹{service.price.toLocaleString('en-IN')}
+              </span>
+            </div>
+
+            <GradientButton
+              size="md"
+              variant={isInCart ? 'secondary' : 'primary'}
+              onClick={() => {
+                addToCart(service);
+              }}
+            >
+              {isInCart ? (
+                <div className="flex items-center space-x-1.5">
+                  <Check className="w-4 h-4 text-pink-400" />
+                  <span>In Cart ({cartQuantity})</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-1.5">
+                  <Plus className="w-4 h-4" />
+                  <span>Add to Cart</span>
+                </div>
+              )}
+            </GradientButton>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
