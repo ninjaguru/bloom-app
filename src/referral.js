@@ -38,6 +38,10 @@ export function captureRefParam() {
 export async function attributeReferral(uid) {
   const pending = sessionStorage.getItem('pendingRef');
   if (!pending) return;
+  if (!/^BLOOM-[A-Z0-9]{6}$/.test(pending)) {
+    sessionStorage.removeItem('pendingRef');
+    return;
+  }
   const ref = doc(db, 'customers', uid);
   const snap = await getDoc(ref);
   if (snap.exists() && snap.data().referredBy) return;

@@ -19,8 +19,9 @@ export async function getLoyaltyBalance(uid) {
     );
     const now = new Date();
     let earned = 0;
-    let spent  = 0;
+    let spent = 0;
     let nextExpiry = null;
+    let earliestNonExpiredEarnDate = null;
 
     snap.docs.forEach((d) => {
       const t = d.data();
@@ -29,9 +30,21 @@ export async function getLoyaltyBalance(uid) {
         if (expiry && expiry > now) {
           earned += t.points;
           if (!nextExpiry || expiry < nextExpiry) nextExpiry = expiry;
+          const earnedAt = t.createdAt?.toDate?.() ?? null;
+          if (earnedAt && (!earliestNonExpiredEarnDate || earnedAt < earliestNonExpiredEarnDate)) {
+            earliestNonExpiredEarnDate = earnedAt;
+          }
         }
-      } else if (t.type === 'spend') {
-        spent += t.points;
+      }
+    });
+
+    snap.docs.forEach((d) => {
+      const t = d.data();
+      if (t.type === 'spend') {
+        const spentAt = t.createdAt?.toDate?.() ?? null;
+        if (!earliestNonExpiredEarnDate || (spentAt && spentAt >= earliestNonExpiredEarnDate)) {
+          spent += t.points;
+        }
       }
     });
 

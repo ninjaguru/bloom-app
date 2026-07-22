@@ -89,7 +89,7 @@ export function getCartState() {
   }
 
   const loyaltyDiscount = loyaltyPointsToRedeem > 0 ? pointsToRupees(loyaltyPointsToRedeem) : 0;
-  const total = subtotal - discountAmount - loyaltyDiscount;
+  const total = Math.max(0, subtotal - discountAmount - loyaltyDiscount);
 
   return {
     items, totalItems, subtotal,

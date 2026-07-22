@@ -5,6 +5,8 @@ import {
 } from 'firebase/firestore';
 import { getToken } from 'firebase/messaging';
 
+const esc = (s) => (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 // Replace with key from Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
 const VAPID_KEY = 'YOUR_VAPID_KEY';
 
@@ -65,8 +67,8 @@ export function initNotificationBell(uid) {
             : '';
           return `
             <div class="notif-item${n.read ? '' : ' notif-unread'}">
-              <div class="notif-title">${n.title}</div>
-              <div class="notif-body">${n.body}</div>
+              <div class="notif-title">${esc(n.title)}</div>
+              <div class="notif-body">${esc(n.body)}</div>
               ${time ? `<div class="notif-time">${time}</div>` : ''}
             </div>`;
         }).join('');
@@ -83,11 +85,15 @@ export function initNotificationBell(uid) {
     }
   });
 
-  document.addEventListener('click', (e) => {
+  const outsideClickHandler = (e) => {
     if (!bell.contains(e.target)) panel.classList.remove('open');
-  });
+  };
+  document.addEventListener('click', outsideClickHandler);
 
-  return unsubscribe;
+  return () => {
+    unsubscribe();
+    document.removeEventListener('click', outsideClickHandler);
+  };
 }
 
 export function showNotificationBanner(uid) {
