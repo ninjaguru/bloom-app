@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { X, Clock, Star, Plus, Check, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Clock, Star, Plus, Check, Sparkles } from 'lucide-react';
 import { Service, RitualStep } from '../../types';
 import { GradientButton } from '../ui/GradientButton';
 import { useCartStore } from '../../stores/cartStore';
@@ -14,8 +14,6 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
   const cartItems = useCartStore((s) => s.items);
 
   const [activeStepIndex, setActiveStepIndex] = useState(0);
-  const [slideDir, setSlideDir] = useState<'left' | 'right'>('right');
-  const slideKey = useRef(0);
 
   if (!service) return null;
 
@@ -25,19 +23,6 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
 
   const steps: RitualStep[] = service.ritualSteps || [];
   const hasSteps = steps.length > 0;
-
-  const handlePrevStep = () => {
-    setSlideDir('left');
-    slideKey.current += 1;
-    setActiveStepIndex((prev) => (prev > 0 ? prev - 1 : steps.length - 1));
-  };
-
-  const handleNextStep = () => {
-    setSlideDir('right');
-    slideKey.current += 1;
-    setActiveStepIndex((prev) => (prev < steps.length - 1 ? prev + 1 : 0));
-  };
-
   const currentStep = hasSteps ? steps[activeStepIndex] : null;
 
   return (
@@ -51,7 +36,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
       {/* Modal Content */}
       <div className="relative z-10 w-full max-w-xl rounded-3xl bg-slate-900 border border-slate-800 text-slate-100 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
         {/* Main Service Image Header */}
-        <div className="relative h-44 sm:h-52 w-full bg-gradient-to-tr from-slate-950 via-slate-900 to-pink-950/40">
+        <div className="relative h-44 sm:h-52 w-full bg-gradient-to-tr from-slate-950 via-slate-900 to-pink-950/40 flex-shrink-0">
           {service.imageUrl ? (
             <img
               src={service.imageUrl}
@@ -72,7 +57,8 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
         </div>
 
         {/* Content Body — scrollable */}
-        <div className="p-6 sm:p-8 space-y-6 overflow-y-auto flex-1">
+        <div className="p-6 sm:p-8 space-y-6 overflow-y-auto flex-1 min-h-0">
+          {/* Title & meta */}
           <div>
             <div className="flex items-center space-x-2 mb-2">
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">
@@ -109,28 +95,37 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
             </p>
           )}
 
-          {/* Service Ritual & Procedure Carousel */}
+          {/* ── Service Ritual & Procedure — Horizontal Tabs ── */}
           {hasSteps && (
             <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-pink-400 flex items-center space-x-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Service Ritual & Procedure</span>
-                </h4>
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                  Step {activeStepIndex + 1} of {steps.length}
-                </span>
+              {/* Section header */}
+              <h4 className="text-xs font-bold uppercase tracking-wider text-pink-400 flex items-center space-x-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Service Ritual &amp; Procedure</span>
+              </h4>
+
+              {/* Scrollable tab pills */}
+              <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-none -mx-1 px-1">
+                {steps.map((step, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveStepIndex(idx)}
+                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 border whitespace-nowrap ${
+                      idx === activeStepIndex
+                        ? 'bg-pink-600 border-pink-500 text-white shadow-lg shadow-pink-900/30'
+                        : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white'
+                    }`}
+                  >
+                    <span className="mr-1 opacity-60">{idx + 1}.</span>
+                    {step.title || `Step ${idx + 1}`}
+                  </button>
+                ))}
               </div>
 
-              {/* Carousel Card */}
-              <div
-                key={slideKey.current}
-                className={`relative rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden shadow-xl p-4 animate-in duration-300 ${
-                  slideDir === 'right' ? 'slide-in-from-right-8' : 'slide-in-from-left-8'
-                }`}
-              >
-                {/* Carousel Image */}
-                <div className="relative h-48 w-full rounded-xl overflow-hidden bg-slate-900 mb-4 border border-slate-800">
+              {/* Active step content */}
+              <div className="rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden shadow-xl">
+                {/* Step image */}
+                <div className="relative h-44 w-full bg-slate-900">
                   {currentStep?.imageUrl ? (
                     <img
                       src={currentStep.imageUrl}
@@ -143,30 +138,10 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
                       <span className="text-xs">Step {activeStepIndex + 1} Procedure</span>
                     </div>
                   )}
-
-                  {/* Nav Arrows */}
-                  {steps.length > 1 && (
-                    <>
-                      <button
-                        onClick={handlePrevStep}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 backdrop-blur-md p-2 text-white hover:bg-pink-500 transition-colors shadow-lg"
-                        aria-label="Previous step"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={handleNextStep}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 backdrop-blur-md p-2 text-white hover:bg-pink-500 transition-colors shadow-lg"
-                        aria-label="Next step"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
                 </div>
 
-                {/* Step Info */}
-                <div className="space-y-1">
+                {/* Step text */}
+                <div className="p-4 space-y-1">
                   <div className="flex items-center justify-between">
                     <h5 className="text-base font-bold text-white font-outfit">
                       {currentStep?.title}
@@ -183,24 +158,6 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
                     </p>
                   )}
                 </div>
-
-                {/* Step Indicator Dots */}
-                {steps.length > 1 && (
-                  <div className="flex items-center justify-center space-x-1.5 mt-4 pt-2 border-t border-slate-900">
-                    {steps.map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setActiveStepIndex(idx)}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                          idx === activeStepIndex
-                            ? 'w-6 bg-pink-500'
-                            : 'w-1.5 bg-slate-800 hover:bg-slate-700'
-                        }`}
-                        aria-label={`Go to step ${idx + 1}`}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           )}

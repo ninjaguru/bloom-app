@@ -506,80 +506,98 @@ function barRow(label, value, max, displayVal) {
    ================================================================ */
 let _editingDocId = null; // null = add mode, string = edit mode
 
-function createRitualStepRow(step = {}) {
-  const div = document.createElement('div');
-  div.className = 'ritual-step-row';
-  div.style.cssText = 'background:rgba(255,255,255,0.03);border:1px solid var(--color-border);padding:10px;border-radius:8px;display:flex;flex-direction:column;gap:8px;position:relative;';
+/* ── Ritual Steps Tab State ─────────────────────────────────── */
+let _ritualSteps = [];   // array of { title, description, durationMinutes, imageUrl }
+let _activeStepIdx = 0;
 
-  div.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-size:0.75rem;font-weight:600;color:var(--color-text-secondary);" class="step-num-label">Step</span>
-      <button type="button" class="remove-step-btn" style="background:none;border:none;color:var(--color-red);cursor:pointer;font-size:0.8rem;">✕ Remove</button>
-    </div>
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;">
-      <input class="svc-input step-title" type="text" placeholder="Step Title (e.g. Cleansing & Exfoliation)" value="${(step.title || '').replace(/"/g, '&quot;')}" />
-      <input class="svc-input step-duration" type="number" min="0" placeholder="Min" value="${step.durationMinutes || ''}" />
-    </div>
-    <input class="svc-input step-img" type="url" placeholder="Step Picture URL (https://…)" value="${(step.imageUrl || '').replace(/"/g, '&quot;')}" />
-    <textarea class="svc-input step-desc" rows="2" placeholder="Step Description / Procedure details..." style="resize:vertical;">${step.description || ''}</textarea>
-  `;
+function renderRitualTabs() {
+  const tabBar   = document.getElementById('ritual-tab-bar');
+  const editPane = document.getElementById('ritual-edit-pane');
+  const empty    = document.getElementById('ritual-empty-hint');
+  if (!tabBar || !editPane) return;
 
-  div.querySelector('.remove-step-btn').addEventListener('click', () => {
-    div.remove();
-    updateRitualStepNumbers();
+  /* Build tab pills */
+  tabBar.innerHTML = '';
+  _ritualSteps.forEach((step, idx) => {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.dataset.idx = idx;
+    tab.className = 'ritual-tab-pill' + (idx === _activeStepIdx ? ' active' : '');
+    tab.innerHTML = `<span class="ritual-tab-num">${idx + 1}</span>${step.title || 'Untitled'}<span class="ritual-tab-del" data-del="${idx}">✕</span>`;
+    tab.addEventListener('click', (e) => {
+      if (e.target.dataset.del !== undefined) {
+        /* delete icon clicked */
+        saveCurrentStepToState();
+        _ritualSteps.splice(Number(e.target.dataset.del), 1);
+        _activeStepIdx = Math.min(_activeStepIdx, Math.max(0, _ritualSteps.length - 1));
+        renderRitualTabs();
+      } else {
+        saveCurrentStepToState();
+        _activeStepIdx = idx;
+        renderRitualTabs();
+      }
+    });
+    tabBar.appendChild(tab);
   });
 
-  return div;
+  /* Show/hide empty hint */
+  if (empty) empty.style.display = _ritualSteps.length === 0 ? 'block' : 'none';
+
+  /* Populate edit pane */
+  editPane.style.display = _ritualSteps.length === 0 ? 'none' : 'block';
+  if (_ritualSteps.length > 0) {
+    const s = _ritualSteps[_activeStepIdx] || {};
+    editPane.querySelector('#step-title').value       = s.title       || '';
+    editPane.querySelector('#step-duration').value    = s.durationMinutes || '';
+    editPane.querySelector('#step-img').value         = s.imageUrl    || '';
+    editPane.querySelector('#step-desc').value        = s.description || '';
+  }
 }
 
-function updateRitualStepNumbers() {
-  const container = document.getElementById('ritual-steps-container');
-  if (!container) return;
-  const rows = container.querySelectorAll('.ritual-step-row');
-  rows.forEach((row, index) => {
-    const label = row.querySelector('.step-num-label');
-    if (label) label.textContent = `Step ${index + 1}`;
-  });
+function saveCurrentStepToState() {
+  if (_ritualSteps.length === 0) return;
+  const editPane = document.getElementById('ritual-edit-pane');
+  if (!editPane) return;
+  const s = _ritualSteps[_activeStepIdx];
+  if (!s) return;
+  s.title            = editPane.querySelector('#step-title').value.trim();
+  s.durationMinutes  = parseInt(editPane.querySelector('#step-duration').value, 10) || 0;
+  s.imageUrl         = editPane.querySelector('#step-img').value.trim();
+  s.description      = editPane.querySelector('#step-desc').value.trim();
 }
 
 function populateRitualSteps(steps = []) {
-  const container = document.getElementById('ritual-steps-container');
-  if (!container) return;
-  container.innerHTML = '';
-  if (steps && steps.length > 0) {
-    steps.forEach((s) => container.appendChild(createRitualStepRow(s)));
-  }
-  updateRitualStepNumbers();
+  _ritualSteps   = steps.map((s) => ({ ...s }));
+  _activeStepIdx = 0;
+  renderRitualTabs();
 }
 
 function collectRitualSteps() {
-  const container = document.getElementById('ritual-steps-container');
-  if (!container) return [];
-  const rows = container.querySelectorAll('.ritual-step-row');
-  const steps = [];
-  rows.forEach((row) => {
-    const title = row.querySelector('.step-title')?.value.trim();
-    const durationMinutes = parseInt(row.querySelector('.step-duration')?.value, 10) || 0;
-    const imageUrl = row.querySelector('.step-img')?.value.trim() || '';
-    const description = row.querySelector('.step-desc')?.value.trim() || '';
-    if (title) {
-      steps.push({
-        title,
-        description,
-        durationMinutes,
-        imageUrl,
-      });
-    }
-  });
-  return steps;
+  saveCurrentStepToState();
+  return _ritualSteps.filter((s) => s.title);
 }
 
-document.getElementById('add-ritual-step-btn')?.addEventListener('click', () => {
-  const container = document.getElementById('ritual-steps-container');
-  if (container) {
-    container.appendChild(createRitualStepRow());
-    updateRitualStepNumbers();
+/* Live tab title refresh as user types */
+document.getElementById('step-title')?.addEventListener('input', (e) => {
+  if (_ritualSteps[_activeStepIdx]) {
+    _ritualSteps[_activeStepIdx].title = e.target.value.trim();
   }
+  const tabBar = document.getElementById('ritual-tab-bar');
+  const pill = tabBar?.querySelector(`[data-idx="${_activeStepIdx}"]`);
+  if (pill) {
+    const numSpan = pill.querySelector('.ritual-tab-num').outerHTML;
+    const delSpan = pill.querySelector('.ritual-tab-del').outerHTML;
+    pill.innerHTML = `${numSpan}${e.target.value.trim() || 'Untitled'}${delSpan}`;
+  }
+});
+
+document.getElementById('add-ritual-step-btn')?.addEventListener('click', () => {
+  saveCurrentStepToState();
+  _ritualSteps.push({ title: '', description: '', durationMinutes: 0, imageUrl: '' });
+  _activeStepIdx = _ritualSteps.length - 1;
+  renderRitualTabs();
+  /* Focus title input */
+  setTimeout(() => document.getElementById('step-title')?.focus(), 50);
 });
 
 function getFormData() {

@@ -543,13 +543,25 @@
           <label>Image URL</label>
           <input class="svc-input" id="svc-image" type="url" placeholder="https://images.unsplash.com/…" />
         </div>
-        <!-- Ritual Steps Section -->
+        <!-- Ritual Steps Section – Horizontal Tabs -->
         <div class="svc-form-row" style="margin-top:16px;border-top:1px solid var(--color-border);padding-top:16px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <label style="font-weight:700;color:var(--color-accent-primary);">Service Ritual & Procedure Steps</label>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <label style="font-weight:700;color:var(--color-accent-primary);">Service Ritual &amp; Procedure Steps</label>
             <button type="button" id="add-ritual-step-btn" class="svc-add-step-btn" style="padding:4px 12px;font-size:0.75rem;border-radius:6px;background:rgba(74,222,128,0.15);color:var(--color-accent-primary);border:1px solid var(--color-border);cursor:pointer;">+ Add Step</button>
           </div>
-          <div id="ritual-steps-container" style="display:flex;flex-direction:column;gap:12px;"></div>
+          <!-- Tab bar -->
+          <div id="ritual-tab-bar" style="display:flex;overflow-x:auto;gap:6px;padding-bottom:8px;scrollbar-width:thin;"></div>
+          <!-- Empty hint -->
+          <p id="ritual-empty-hint" style="font-size:0.75rem;color:var(--color-text-secondary);margin:4px 0 0;">No steps yet. Click <strong>+ Add Step</strong> to begin.</p>
+          <!-- Shared edit pane (shown for active tab) -->
+          <div id="ritual-edit-pane" style="display:none;margin-top:10px;background:rgba(255,255,255,0.03);border:1px solid var(--color-border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;">
+              <input class="svc-input" id="step-title" type="text" placeholder="Step Title (e.g. Cleansing &amp; Exfoliation)" />
+              <input class="svc-input" id="step-duration" type="number" min="0" placeholder="Duration (min)" />
+            </div>
+            <input class="svc-input" id="step-img" type="url" placeholder="Step Picture URL (https://…)" />
+            <textarea class="svc-input" id="step-desc" rows="2" placeholder="Step Description / Procedure details…" style="resize:vertical;"></textarea>
+          </div>
         </div>
         <p class="svc-error" id="svc-error"></p>
       </div>

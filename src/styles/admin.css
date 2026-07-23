@@ -895,6 +895,53 @@ tbody td {
 }
 .action-btn.edit-svc-btn:hover { background: rgba(var(--color-accent-rgb, 139,94,255), 0.25); }
 
+/* ── Ritual Step Tab Pills ─────────────────────────────────── */
+.ritual-tab-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 5px 11px 5px 9px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.04);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ritual-tab-pill.active {
+  background: rgba(139,94,255,0.18);
+  border-color: var(--color-accent-primary);
+  color: #fff;
+}
+.ritual-tab-pill:hover:not(.active) {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+.ritual-tab-num {
+  font-size: 0.65rem;
+  opacity: 0.55;
+  line-height: 1;
+}
+.ritual-tab-del {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  margin-left: 2px;
+  padding: 0 2px;
+  transition: opacity 0.1s, color 0.1s;
+}
+.ritual-tab-del:hover {
+  opacity: 1;
+  color: #ff6b6b;
+}
+
 @media (max-width: 768px) {
   .admin-header    { padding: 0 16px; }
   .admin-body      { padding: 16px; }
