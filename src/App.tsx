@@ -8,14 +8,17 @@ import { Service } from './types';
 import { Header } from './components/layout/Header';
 import { Hero } from './components/layout/Hero';
 import { Footer } from './components/layout/Footer';
+import { PromoBanner } from './components/layout/PromoBanner';
 import { CategoryPills } from './components/services/CategoryPills';
 import { SearchBar } from './components/search/SearchBar';
 import { ServiceGrid } from './components/services/ServiceGrid';
 import { ServiceModal } from './components/services/ServiceModal';
+import { RecentlyViewed } from './components/services/RecentlyViewed';
 import { CartDrawer } from './components/cart/CartDrawer';
 import { BookingModal } from './components/booking/BookingModal';
 import { LoginModal } from './components/auth/LoginModal';
 import { ProfileModal } from './components/auth/ProfileModal';
+import { BookingsModal } from './components/auth/BookingsModal';
 import { NotificationBanner } from './components/notifications/NotificationBanner';
 import { Check } from 'lucide-react';
 
@@ -30,11 +33,14 @@ export default function App() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [bookingsOpen, setBookingsOpen] = useState(false);
+
+  // Recently viewed re-render trigger
+  const [recentKey, setRecentKey] = useState(0);
 
   // Toast state
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  // Authenticate user & sync state
   useAuth();
 
   const allServices = useServices(gender, category);
@@ -57,13 +63,20 @@ export default function App() {
     setSearchQuery('');
   };
 
+  const handleServiceClose = () => {
+    setSelectedService(null);
+    setRecentKey((k) => k + 1); // refresh recently viewed strip
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-pink-500 selection:text-white">
       <NotificationBanner />
+      <PromoBanner />
 
       <Header
         onOpenLogin={() => setLoginOpen(true)}
         onOpenProfile={() => setProfileOpen(true)}
+        onOpenBookings={() => setBookingsOpen(true)}
         onOpenCart={() => setCartOpen(true)}
       />
 
@@ -78,6 +91,11 @@ export default function App() {
 
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
+        <RecentlyViewed
+          key={recentKey}
+          onSelect={(s) => setSelectedService(s)}
+        />
+
         <ServiceGrid
           services={services}
           onSelectService={(service) => setSelectedService(service)}
@@ -89,7 +107,7 @@ export default function App() {
       {/* Modals & Drawers */}
       <ServiceModal
         service={selectedService}
-        onClose={() => setSelectedService(null)}
+        onClose={handleServiceClose}
       />
 
       <CartDrawer
@@ -115,7 +133,13 @@ export default function App() {
         onSuccessToast={showToast}
       />
 
-      {/* Toast Notification */}
+      <BookingsModal
+        isOpen={bookingsOpen}
+        onClose={() => setBookingsOpen(false)}
+        onBookAgainToast={(msg) => { showToast(msg); setCartOpen(true); }}
+      />
+
+      {/* Toast */}
       {toastMsg && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-2 px-4 py-3 rounded-2xl bg-emerald-500 text-slate-950 font-bold text-sm shadow-2xl animate-in slide-in-from-bottom duration-200">
           <Check className="w-5 h-5 flex-shrink-0" />

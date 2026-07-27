@@ -10,12 +10,14 @@ import { logout } from '../../lib/auth';
 interface HeaderProps {
   onOpenLogin: () => void;
   onOpenProfile: () => void;
+  onOpenBookings: () => void;
   onOpenCart: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenLogin,
   onOpenProfile,
+  onOpenBookings,
   onOpenCart,
 }) => {
   const user = useAuthStore((s) => s.user);
@@ -46,6 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
             loyaltyPoints={loyaltyPoints}
             onOpenLogin={onOpenLogin}
             onOpenProfile={onOpenProfile}
+            onOpenBookings={onOpenBookings}
             onLogout={logout}
           />
 

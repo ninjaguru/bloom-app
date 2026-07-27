@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Award, ChevronDown } from 'lucide-react';
+import { User, LogOut, Award, ChevronDown, Calendar } from 'lucide-react';
 import { FirebaseUser, CustomerProfile } from '../../types';
 
 interface ProfileDropdownProps {
@@ -8,6 +8,7 @@ interface ProfileDropdownProps {
   loyaltyPoints: number;
   onOpenLogin: () => void;
   onOpenProfile: () => void;
+  onOpenBookings: () => void;
   onLogout: () => void;
 }
 
@@ -17,6 +18,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   loyaltyPoints,
   onOpenLogin,
   onOpenProfile,
+  onOpenBookings,
   onLogout,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -84,6 +86,17 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           >
             <User className="w-4 h-4 text-pink-400" />
             <span>My Profile & Rewards</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              onOpenBookings();
+            }}
+            className="w-full flex items-center space-x-2.5 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-xl transition-colors"
+          >
+            <Calendar className="w-4 h-4 text-purple-400" />
+            <span>My Bookings</span>
           </button>
 
           <button

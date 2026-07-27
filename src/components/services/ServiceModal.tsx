@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { X, Clock, Star, Plus, Check, Sparkles } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Clock, Star, Plus, Check, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Service, RitualStep } from '../../types';
 import { GradientButton } from '../ui/GradientButton';
 import { useCartStore } from '../../stores/cartStore';
+import { addRecentlyViewed } from '../../lib/recentlyViewed';
 
 interface ServiceModalProps {
   service: Service | null;
@@ -14,6 +15,12 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
   const cartItems = useCartStore((s) => s.items);
 
   const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const [slideDir, setSlideDir] = useState<'left' | 'right'>('right');
+  const slideKey = useRef(0);
+
+  useEffect(() => {
+    if (service) addRecentlyViewed(service);
+  }, [service?.id]);
 
   if (!service) return null;
 
