@@ -1,0 +1,10 @@
+[
+  {
+    "date": "2026-07-27",
+    "macrostructure": "redesign-in-place (left-biased hero + broken grid)",
+    "theme": "custom (dark-rose canvas, hue 350)",
+    "theme_axes": "dark / roman-serif-display / warm",
+    "enrichment": "none",
+    "brief": "Bloom at Home · redesign Home + Booking flow off generic gradient/glow slop onto a token-based dark-rose system"
+  }
+]

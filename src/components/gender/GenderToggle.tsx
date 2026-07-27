@@ -8,29 +8,37 @@ interface GenderToggleProps {
 export const GenderToggle: React.FC<GenderToggleProps> = ({ gender, onChange }) => {
   const isWomen = gender === 'women';
 
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    color: active ? 'var(--color-accent-ink)' : 'var(--color-muted)',
+    backgroundColor: active ? 'var(--color-accent)' : 'transparent',
+    transition: `background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out)`,
+  });
+
   return (
-    <div className="relative inline-flex p-1 bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-md">
+    <div
+      className="inline-flex gap-1 rounded-[var(--radius-pill)] p-1"
+      style={{ backgroundColor: 'var(--color-paper-2)', border: '1px solid var(--color-rule)' }}
+      role="group"
+      aria-label="Filter services by gender"
+    >
       <button
+        type="button"
         onClick={() => onChange('women')}
-        className={`relative z-10 px-6 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ${
-          isWomen ? 'text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-        }`}
+        aria-pressed={isWomen}
+        className="rounded-[var(--radius-pill)] px-5 py-2 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        style={{ ...tabStyle(isWomen), outlineColor: 'var(--color-focus)' }}
       >
         Women
       </button>
       <button
+        type="button"
         onClick={() => onChange('men')}
-        className={`relative z-10 px-6 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ${
-          !isWomen ? 'text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-        }`}
+        aria-pressed={!isWomen}
+        className="rounded-[var(--radius-pill)] px-5 py-2 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        style={{ ...tabStyle(!isWomen), outlineColor: 'var(--color-focus)' }}
       >
         Men
       </button>
-      <div
-        className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl transition-all duration-300 ease-out ${
-          isWomen ? 'left-1' : 'left-[calc(50%+2px)]'
-        }`}
-      />
     </div>
   );
 };

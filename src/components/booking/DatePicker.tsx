@@ -13,7 +13,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   onSelectDate,
 }) => {
   return (
-    <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 my-3">
+    <div className="my-3 grid grid-cols-4 gap-2 sm:grid-cols-7">
       {dates.map((d) => {
         const isSelected = selectedDate === d.value;
         return (
@@ -21,14 +21,21 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             key={d.value}
             type="button"
             onClick={() => onSelectDate(d.value)}
-            className={`flex flex-col items-center p-2.5 rounded-xl border text-xs transition-all duration-200 ${
-              isSelected
-                ? 'bg-gradient-to-r from-pink-500 to-rose-500 border-pink-500 text-white font-bold shadow-lg shadow-pink-500/25 scale-105'
-                : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'
-            }`}
+            aria-pressed={isSelected}
+            className="flex flex-col items-center rounded-[var(--radius-input)] p-2.5 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            style={{
+              backgroundColor: isSelected ? 'var(--color-accent)' : 'var(--color-paper-2)',
+              border: `1px solid ${isSelected ? 'var(--color-accent)' : 'var(--color-rule)'}`,
+              color: isSelected ? 'var(--color-accent-ink)' : 'var(--color-muted)',
+              outlineColor: 'var(--color-focus)',
+              transition: 'background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out)',
+            }}
           >
-            <span className="font-semibold">{d.label}</span>
-            <span className={`text-[10px] ${isSelected ? 'text-pink-100' : 'text-slate-500'}`}>
+            <span className="font-medium font-mono-tabular">{d.label}</span>
+            <span
+              className="text-[10px]"
+              style={{ color: isSelected ? 'var(--color-accent-ink)' : 'var(--color-neutral)', opacity: isSelected ? 0.8 : 1 }}
+            >
               {d.sublabel}
             </span>
           </button>

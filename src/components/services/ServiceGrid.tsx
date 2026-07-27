@@ -16,11 +16,12 @@ export const ServiceGrid: React.FC<ServiceGridProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
+      <div className="grid max-w-7xl grid-cols-1 gap-6 mx-auto px-4 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((n) => (
           <div
             key={n}
-            className="h-64 rounded-2xl bg-slate-900/60 border border-slate-800 animate-pulse p-6"
+            className="h-64 animate-pulse rounded-[var(--radius-card)] p-6"
+            style={{ backgroundColor: 'var(--color-paper-2)', border: '1px solid var(--color-rule)' }}
           />
         ))}
       </div>
@@ -29,12 +30,17 @@ export const ServiceGrid: React.FC<ServiceGridProps> = ({
 
   if (services.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-        <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 mb-4">
-          <SearchX className="w-8 h-8" />
+      <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+        <div
+          className="mb-4 flex h-16 w-16 items-center justify-center rounded-full"
+          style={{ backgroundColor: 'var(--color-paper-2)', border: '1px solid var(--color-rule)', color: 'var(--color-neutral)' }}
+        >
+          <SearchX className="h-8 w-8" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-200 mb-1">No services found</h3>
-        <p className="text-sm text-slate-400 max-w-sm">
+        <h3 className="mb-1 text-lg font-semibold" style={{ color: 'var(--color-ink)' }}>
+          No services found
+        </h3>
+        <p className="max-w-sm text-sm" style={{ color: 'var(--color-muted)' }}>
           Try searching for something else or browse another category.
         </p>
       </div>
@@ -42,8 +48,8 @@ export const ServiceGrid: React.FC<ServiceGridProps> = ({
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="mx-auto my-8 max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {services.map((service) => (
           <ServiceCard
             key={service.id || service.serviceId}

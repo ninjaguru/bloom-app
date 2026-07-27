@@ -20,6 +20,7 @@ import { LoginModal } from './components/auth/LoginModal';
 import { ProfileModal } from './components/auth/ProfileModal';
 import { BookingsModal } from './components/auth/BookingsModal';
 import { NotificationBanner } from './components/notifications/NotificationBanner';
+import { InstallBanner } from './components/layout/InstallBanner';
 import { Check } from 'lucide-react';
 
 export default function App() {
@@ -69,7 +70,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-pink-500 selection:text-white">
+    <div className="min-h-screen flex flex-col font-sans selection:bg-[var(--color-accent)] selection:text-[var(--color-accent-ink)]" style={{ background: 'var(--color-paper)', color: 'var(--color-ink)' }}>
       <NotificationBanner />
       <PromoBanner />
 
@@ -138,6 +139,8 @@ export default function App() {
         onClose={() => setBookingsOpen(false)}
         onBookAgainToast={(msg) => { showToast(msg); setCartOpen(true); }}
       />
+
+      <InstallBanner />
 
       {/* Toast */}
       {toastMsg && (

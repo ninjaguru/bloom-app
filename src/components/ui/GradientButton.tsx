@@ -15,35 +15,39 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   size = 'md',
   fullWidth = false,
   disabled,
+  style,
   ...props
 }) => {
   const sizeClasses = {
-    sm: 'px-3 py-1.5 text-xs font-medium rounded-lg',
-    md: 'px-5 py-2.5 text-sm font-semibold rounded-xl',
-    lg: 'px-6 py-3.5 text-base font-bold rounded-2xl',
+    sm: 'px-3 py-1.5 text-xs font-medium rounded-[calc(var(--radius-input)*0.85)]',
+    md: 'px-5 py-2.5 text-sm font-medium rounded-[var(--radius-input)]',
+    lg: 'px-6 py-3 text-base font-medium rounded-[var(--radius-input)]',
   };
 
-  const variantClasses = {
-    primary:
-      'bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 hover:scale-[1.02] active:scale-[0.98]',
-    secondary:
-      'bg-slate-800 text-slate-100 hover:bg-slate-700 hover:scale-[1.02] active:scale-[0.98]',
-    outline:
-      'border border-pink-500/40 bg-pink-500/10 text-pink-300 hover:bg-pink-500/20 hover:border-pink-500',
-    danger:
-      'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg shadow-red-500/20 hover:shadow-red-500/40',
+  const variantStyle: Record<string, React.CSSProperties> = {
+    primary: { backgroundColor: 'var(--color-accent)', color: 'var(--color-accent-ink)' },
+    secondary: { backgroundColor: 'var(--color-paper-3)', color: 'var(--color-ink)', border: '1px solid var(--color-rule)' },
+    outline: { backgroundColor: 'var(--color-accent-soft)', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' },
+    danger: { backgroundColor: 'var(--color-danger)', color: 'var(--color-accent-ink)' },
   };
 
   return (
     <button
       disabled={disabled}
       className={cn(
-        'relative inline-flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100',
+        'relative inline-flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
         sizeClasses[size],
-        variantClasses[variant],
         fullWidth ? 'w-full' : '',
         className
       )}
+      style={{
+        ...variantStyle[variant],
+        outlineColor: 'var(--color-focus)',
+        transition: 'background-color var(--dur-short) var(--ease-out), transform var(--dur-micro) var(--ease-out)',
+        ...style,
+      }}
+      onMouseDown={(e) => !disabled && (e.currentTarget.style.transform = 'translateY(1px)')}
+      onMouseUp={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
       {...props}
     >
       {children}

@@ -1,0 +1,61 @@
+/* Hallmark · portable token export for the Home + Booking redesign.
+ * Mirrors the live tokens in src/styles/index.css :root — this file is the
+ * drop-in copy for reuse elsewhere, not a second source of truth.
+ */
+:root {
+  /* Surfaces — anchor hue 350 (brand pink), tinted, never pure black */
+  --color-paper:    oklch(14% 0.014 350);
+  --color-paper-2:  oklch(18% 0.016 350);
+  --color-paper-3:  oklch(22% 0.018 350);
+  --color-rule:     oklch(32% 0.014 350);
+
+  /* Ink */
+  --color-ink:      oklch(95% 0.008 350);
+  --color-muted:    oklch(72% 0.010 350);
+  --color-neutral:  oklch(58% 0.010 350);
+
+  /* Accent — one primary (rose), one secondary reserved for rating/verified marks only */
+  --color-accent:       oklch(66% 0.19 350);
+  --color-accent-ink:   oklch(16% 0.020 350);
+  --color-accent-soft:  oklch(66% 0.19 350 / 0.14);
+  --color-accent-bloom: oklch(66% 0.19 350 / 0.16);
+  --color-focus:        oklch(78% 0.18 350);
+  --color-gold:         oklch(78% 0.13 85);
+  --color-danger:       oklch(62% 0.18 25);
+  --color-danger-soft:  oklch(62% 0.18 25 / 0.12);
+
+  /* Type */
+  --font-display: 'Sentient', Georgia, serif;
+  --font-body:    'Geist', system-ui, sans-serif;
+  --font-mono:    'Geist Mono', ui-monospace, monospace;
+
+  /* Space — 4pt scale, named by role */
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  /* Motion */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:     cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long:  420ms;
+
+  /* Radius */
+  --radius-input: 0.625rem;
+  --radius-card:  0.875rem;
+  --radius-pill:  999px;
+
+  /* Z-scale */
+  --z-raised: 10;
+  --z-sticky: 200;
+  --z-modal: 400;
+  --z-toast: 500;
+}

@@ -48,26 +48,40 @@ export const SmoothDrawer: React.FC<SmoothDrawerProps> = ({
     <div className="fixed inset-0 z-50 flex overflow-hidden">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-300"
+        className="fixed inset-0 animate-in fade-in duration-300"
+        style={{ backgroundColor: 'oklch(8% 0.01 350 / 0.6)' }}
         onClick={onClose}
       />
 
       {/* Panel */}
       <div
         className={cn(
-          'relative z-10 flex flex-col bg-slate-900/95 border-slate-800 text-slate-100 shadow-2xl backdrop-blur-xl transition-transform duration-300 ease-out',
+          'relative z-10 flex flex-col shadow-2xl transition-transform duration-300 ease-out',
           isRight
-            ? 'ml-auto h-full w-full max-w-md border-l animate-in slide-in-from-right'
-            : 'mt-auto w-full max-h-[90vh] rounded-t-3xl border-t animate-in slide-in-from-bottom',
+            ? 'ml-auto h-full w-full max-w-md animate-in slide-in-from-right'
+            : 'mt-auto max-h-[90vh] w-full animate-in slide-in-from-bottom',
           className
         )}
+        style={{
+          backgroundColor: 'var(--color-paper-2)',
+          color: 'var(--color-ink)',
+          borderColor: 'var(--color-rule)',
+          borderLeft: isRight ? '1px solid var(--color-rule)' : undefined,
+          borderTop: !isRight ? '1px solid var(--color-rule)' : undefined,
+          borderTopLeftRadius: !isRight ? 'var(--radius-card)' : undefined,
+          borderTopRightRadius: !isRight ? 'var(--radius-card)' : undefined,
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80">
-          <div className="text-lg font-semibold text-slate-100">{title}</div>
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--color-rule)' }}>
+          <div className="text-lg font-medium font-outfit" style={{ color: 'var(--color-ink)' }}>
+            {title}
+          </div>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
+            className="rounded-full p-2 focus-visible:outline focus-visible:outline-2"
+            style={{ color: 'var(--color-neutral)', outlineColor: 'var(--color-focus)', transition: 'color var(--dur-short) var(--ease-out)' }}
           >
             <X className="w-5 h-5" />
           </button>

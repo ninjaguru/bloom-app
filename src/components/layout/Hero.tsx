@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, ShieldCheck, Clock, Award } from 'lucide-react';
+import { ShieldCheck, Clock, Award } from 'lucide-react';
 import { GenderToggle } from '../gender/GenderToggle';
 
 interface HeroProps {
@@ -7,52 +7,68 @@ interface HeroProps {
   onGenderChange: (gender: 'women' | 'men') => void;
 }
 
+const TRUST_MARKS = [
+  { icon: ShieldCheck, label: 'Sterile, single-use kits' },
+  { icon: Clock, label: 'On-time, every visit' },
+  { icon: Award, label: 'Certified beauticians' },
+];
+
 export const Hero: React.FC<HeroProps> = ({ gender, onGenderChange }) => {
   return (
-    <section className="relative overflow-hidden py-16 md:py-24 text-center">
-      {/* Glow Effects */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+    <section
+      className="relative overflow-hidden px-4 pt-14 pb-10 md:pt-20 md:pb-14"
+      style={{
+        backgroundImage:
+          'radial-gradient(60% 50% at 88% 8%, var(--color-accent-bloom), transparent 68%)',
+      }}
+    >
+      <div className="relative mx-auto grid max-w-5xl gap-8 md:grid-cols-[1.35fr_1fr] md:items-end">
+        <div>
+          <p
+            className="mb-3 text-xs font-semibold tracking-wide"
+            style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-mono)' }}
+          >
+            AT-HOME · APPOINTMENT IN 45 MIN
+          </p>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4">
-        {/* Badge */}
-        <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-300 text-xs font-semibold mb-6 animate-pulse">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>At-Home Luxury Salon Experience</span>
+          <h1
+            className="max-w-md text-[2.75rem] leading-[1.05] font-medium sm:text-[3.4rem]"
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}
+          >
+            Salon care,{' '}
+            <span
+              style={{
+                color: 'var(--color-accent)',
+                textDecoration: 'underline',
+                textDecorationColor: 'var(--color-accent-soft)',
+                textDecorationThickness: '3px',
+                textUnderlineOffset: '4px',
+              }}
+            >
+              delivered
+            </span>{' '}
+            to your door.
+          </h1>
+
+          <p className="mt-5 max-w-sm text-[0.95rem] leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+            Certified pros bring facials, waxing, massage & grooming to your home — sterile kits, no salon trip required.
+          </p>
+
+          <div className="mt-7">
+            <GenderToggle gender={gender} onChange={onGenderChange} />
+          </div>
         </div>
 
-        {/* Title */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white font-outfit leading-tight mb-4">
-          Salon Luxury, <br />
-          <span className="bg-gradient-to-r from-pink-400 via-rose-400 to-purple-400 bg-clip-text text-transparent">
-            At Your Doorstep
-          </span>
-        </h1>
-
-        {/* Subtitle */}
-        <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto mb-8 font-light">
-          Premium beauty & grooming services delivered to your home by top certified professionals with single-use sterile kits.
-        </p>
-
-        {/* Gender Filter Toggle */}
-        <div className="flex justify-center mb-10">
-          <GenderToggle gender={gender} onChange={onGenderChange} />
-        </div>
-
-        {/* Value Highlights */}
-        <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto text-xs sm:text-sm text-slate-400 pt-4 border-t border-slate-800/80">
-          <div className="flex flex-col items-center space-y-1">
-            <ShieldCheck className="w-5 h-5 text-pink-400" />
-            <span className="font-medium text-slate-300">100% Hygienic</span>
-          </div>
-          <div className="flex flex-col items-center space-y-1">
-            <Clock className="w-5 h-5 text-pink-400" />
-            <span className="font-medium text-slate-300">On-Time Service</span>
-          </div>
-          <div className="flex flex-col items-center space-y-1">
-            <Award className="w-5 h-5 text-pink-400" />
-            <span className="font-medium text-slate-300">Top Beauticians</span>
-          </div>
+        <div
+          className="flex flex-col gap-3 border-t pt-5 md:border-t-0 md:border-l md:pl-8 md:pt-0"
+          style={{ borderColor: 'var(--color-rule)' }}
+        >
+          {TRUST_MARKS.map(({ icon: Icon, label }) => (
+            <div key={label} className="flex items-center gap-2.5 text-sm" style={{ color: 'var(--color-muted)' }}>
+              <Icon className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--color-accent)' }} />
+              <span>{label}</span>
+            </div>
+          ))}
         </div>
       </div>
     </section>

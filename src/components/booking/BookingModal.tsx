@@ -20,6 +20,17 @@ interface BookingModalProps {
   onSuccessToast?: (msg: string) => void;
 }
 
+const INPUT_CLASS =
+  'w-full rounded-[var(--radius-input)] px-4 py-2.5 text-sm placeholder-[var(--color-neutral)] focus:outline-none focus:border-[var(--color-accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2';
+
+const INPUT_STYLE: React.CSSProperties = {
+  backgroundColor: 'var(--color-paper-3)',
+  border: '1px solid var(--color-rule)',
+  color: 'var(--color-ink)',
+  outlineColor: 'var(--color-focus)',
+  transition: 'border-color var(--dur-short) var(--ease-out)',
+};
+
 export const BookingModal: React.FC<BookingModalProps> = ({
   isOpen,
   onClose,
@@ -154,10 +165,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       onClose={onClose}
       position="bottom"
       title={
-        <div className="flex items-center justify-between w-full">
+        <div className="flex w-full items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white font-outfit">Book Appointment</h2>
-            <p className="text-xs text-slate-400 font-normal">
+            <h2 className="text-lg font-medium font-outfit" style={{ color: 'var(--color-ink)' }}>
+              Book appointment
+            </h2>
+            <p className="text-xs font-mono-tabular" style={{ color: 'var(--color-muted)' }}>
               {cartTotals.totalItems} service{cartTotals.totalItems !== 1 ? 's' : ''} · ₹
               {cartTotals.total.toLocaleString('en-IN')}
             </p>
@@ -165,47 +178,50 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         </div>
       }
     >
-      <div className="max-w-2xl mx-auto space-y-6 py-2">
+      <div className="mx-auto max-w-2xl space-y-6 py-2">
         {/* Customer Info */}
         <div className="space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-pink-400 flex items-center space-x-1">
+          <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
             <User className="w-3.5 h-3.5" />
-            <span>Your Details</span>
+            <span>Your details</span>
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Full Name"
-              className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-pink-500"
+              placeholder="Full name"
+              className={INPUT_CLASS}
+              style={INPUT_STYLE}
             />
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="Mobile Number (10 digits)"
+              placeholder="Mobile number (10 digits)"
               maxLength={10}
-              className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-pink-500"
+              className={INPUT_CLASS}
+              style={INPUT_STYLE}
             />
           </div>
         </div>
 
         {/* Address Info */}
         <div className="space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-pink-400 flex items-center space-x-1">
+          <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
             <Home className="w-3.5 h-3.5" />
-            <span>Service Address</span>
+            <span>Service address</span>
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="relative">
               <input
                 type="text"
                 list="apartment-list"
                 value={apartment}
                 onChange={(e) => handleApartmentChange(e.target.value)}
-                placeholder="Apartment / Society Name"
-                className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-pink-500"
+                placeholder="Apartment / society name"
+                className={INPUT_CLASS}
+                style={INPUT_STYLE}
               />
               <datalist id="apartment-list">
                 {apartmentList.map((apt) => (
@@ -217,18 +233,19 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               type="text"
               value={flat}
               onChange={(e) => setFlat(e.target.value)}
-              placeholder="Flat / Door No. (e.g. A-204)"
-              className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-pink-500"
+              placeholder="Flat / door no. (e.g. A-204)"
+              className={INPUT_CLASS}
+              style={INPUT_STYLE}
             />
           </div>
         </div>
 
         {/* Date Selection */}
         {apartment.trim() && (
-          <div className="space-y-2 animate-in fade-in duration-200">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-pink-400 flex items-center space-x-1">
+          <div className="animate-in fade-in space-y-2 duration-200">
+            <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
               <Calendar className="w-3.5 h-3.5" />
-              <span>Select Date</span>
+              <span>Select date</span>
             </h3>
             <DatePicker
               dates={dates}
@@ -240,10 +257,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
         {/* Slot Selection */}
         {apartment.trim() && selectedDate && (
-          <div className="space-y-2 animate-in fade-in duration-200">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-pink-400 flex items-center space-x-1">
+          <div className="animate-in fade-in space-y-2 duration-200">
+            <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
               <Clock className="w-3.5 h-3.5" />
-              <span>Select Time Slot</span>
+              <span>Select time slot</span>
             </h3>
             <SlotPicker
               slots={slots}
@@ -256,14 +273,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
         {/* Error message */}
         {errorMsg && (
-          <div className="flex items-center space-x-2 text-rose-400 text-xs font-medium p-3 rounded-xl bg-rose-500/10 border border-rose-500/30">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <div
+            className="flex items-center gap-2 rounded-[var(--radius-input)] p-3 text-xs font-medium"
+            style={{ backgroundColor: 'var(--color-danger-soft)', border: '1px solid var(--color-danger)', color: 'var(--color-danger)' }}
+            role="alert"
+          >
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {/* Footer Confirm */}
-        <div className="pt-4 border-t border-slate-800">
+        <div className="pt-4" style={{ borderTop: '1px solid var(--color-rule)' }}>
           <GradientButton
             fullWidth
             size="lg"
@@ -272,11 +293,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             className="flex items-center justify-center space-x-2"
           >
             {submitting ? (
-              <span>Confirming...</span>
+              <span>Confirming…</span>
             ) : (
               <>
                 <CheckCircle className="w-5 h-5" />
-                <span>Confirm Booking & Notify via WhatsApp</span>
+                <span>Confirm booking &amp; notify via WhatsApp</span>
               </>
             )}
           </GradientButton>

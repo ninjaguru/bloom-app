@@ -14,19 +14,19 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
   loading = false,
 }) => {
   if (loading) {
-    return <p className="text-xs text-slate-400 py-2">Loading available slots...</p>;
+    return <p className="py-2 text-xs" style={{ color: 'var(--color-muted)' }}>Loading available slots…</p>;
   }
 
   if (slots.length === 0) {
     return (
-      <p className="text-xs text-rose-400 py-2">
+      <p className="py-2 text-xs" style={{ color: 'var(--color-danger)' }}>
         No slots available for this apartment.
       </p>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 my-3">
+    <div className="my-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
       {slots.map((slot) => {
         const isSelected = selectedSlot === slot;
         return (
@@ -34,11 +34,15 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
             key={slot}
             type="button"
             onClick={() => onSelectSlot(slot)}
-            className={`py-2.5 px-3 rounded-xl border text-xs font-medium transition-all duration-200 ${
-              isSelected
-                ? 'bg-gradient-to-r from-pink-500 to-rose-500 border-pink-500 text-white font-bold shadow-md scale-105'
-                : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'
-            }`}
+            aria-pressed={isSelected}
+            className="rounded-[var(--radius-input)] px-3 py-2.5 text-xs font-medium font-mono-tabular focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            style={{
+              backgroundColor: isSelected ? 'var(--color-accent)' : 'var(--color-paper-2)',
+              border: `1px solid ${isSelected ? 'var(--color-accent)' : 'var(--color-rule)'}`,
+              color: isSelected ? 'var(--color-accent-ink)' : 'var(--color-muted)',
+              outlineColor: 'var(--color-focus)',
+              transition: 'background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out)',
+            }}
           >
             {slot}
           </button>
