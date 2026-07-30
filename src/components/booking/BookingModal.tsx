@@ -12,7 +12,10 @@ import {
 } from '../../lib/booking';
 import { useCartStore, selectCartTotals } from '../../stores/cartStore';
 import { useAuthStore } from '../../stores/authStore';
-import { Calendar, User, Home, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { useSubscriptionStore } from '../../stores/subscriptionStore';
+import { getAllAddons } from '../../lib/addons';
+import { ServiceAddon } from '../../types';
+import { Calendar, User, Home, Clock, AlertCircle, CheckCircle, Zap, Plus, Check } from 'lucide-react';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -37,8 +40,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   onSuccessToast,
 }) => {
   const profile = useAuthStore((s) => s.profile);
+  const user = useAuthStore((s) => s.user);
   const cartTotals = useCartStore(selectCartTotals);
   const checkout = useCartStore((s) => s.checkout);
+  const usePassCredit = useCartStore((s) => s.usePassCredit);
+  const setUsePassCredit = useCartStore((s) => s.setUsePassCredit);
+  const selectedAddons = useCartStore((s) => s.selectedAddons);
+  const setSelectedAddons = useCartStore((s) => s.setSelectedAddons);
+  const activeSubscription = useSubscriptionStore((s) => s.activeSubscription);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -51,12 +60,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [availableAddons, setAvailableAddons] = useState<ServiceAddon[]>([]);
 
   const dates = getAvailableDates();
+  const remainingCredits = activeSubscription
+    ? activeSubscription.creditsTotal - activeSubscription.creditsUsed
+    : 0;
+  const hasCredits = remainingCredits > 0;
 
   useEffect(() => {
     if (isOpen) {
       fetchApartments().then(setApartmentList);
+      getAllAddons().then(setAvailableAddons);
       if (profile) {
         const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ');
         setName(fullName || '');
@@ -82,6 +97,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         setSlots(res);
         setLoadingSlots(false);
       });
+    }
+  };
+
+  const toggleAddon = (addon: ServiceAddon) => {
+    const exists = selectedAddons.find((a) => a.id === addon.id);
+    if (exists) {
+      setSelectedAddons(selectedAddons.filter((a) => a.id !== addon.id));
+    } else {
+      setSelectedAddons([...selectedAddons, addon]);
     }
   };
 
@@ -179,6 +203,81 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       }
     >
       <div className="mx-auto max-w-2xl space-y-6 py-2">
+        {/* Bloom Pass Credit */}
+        {user && hasCredits && (
+          <div
+            className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
+              usePassCredit
+                ? 'bg-amber-500/15 border-amber-500/50 shadow-lg shadow-amber-500/10'
+                : 'bg-slate-900/60 border-slate-800 hover:border-amber-500/30'
+            }`}
+            onClick={() => setUsePassCredit(!usePassCredit)}
+          >
+            <div className="flex items-center space-x-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                usePassCredit ? 'bg-amber-500' : 'bg-amber-500/20'
+              }`}>
+                <Zap className={`w-5 h-5 ${usePassCredit ? 'text-slate-950' : 'text-amber-400'}`} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white font-outfit">Bloom Pass Credit</p>
+                <p className="text-xs text-amber-300">{remainingCredits} credit{remainingCredits !== 1 ? 's' : ''} available</p>
+              </div>
+            </div>
+            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+              usePassCredit ? 'bg-amber-500 border-amber-500' : 'border-slate-600'
+            }`}>
+              {usePassCredit && <Check className="w-4 h-4 text-slate-950" />}
+            </div>
+          </div>
+        )}
+
+        {/* Add-ons */}
+        {availableAddons.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add-ons</span>
+            </h3>
+            <div className="grid gap-2">
+              {availableAddons.map((addon) => {
+                const isSelected = selectedAddons.some((a) => a.id === addon.id);
+                return (
+                  <button
+                    key={addon.id}
+                    onClick={() => toggleAddon(addon)}
+                    className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
+                      isSelected
+                        ? 'bg-pink-500/10 border-pink-500/40'
+                        : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                        isSelected ? 'bg-pink-500 border-pink-500' : 'border-slate-600'
+                      }`}>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{addon.title}</p>
+                        {addon.description && (
+                          <p className="text-xs text-slate-400">{addon.description}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-3">
+                      <span className="text-sm font-bold text-pink-400">+₹{addon.price.toLocaleString('en-IN')}</span>
+                      {addon.durationMinutes > 0 && (
+                        <span className="text-xs text-slate-500 block">{addon.durationMinutes} min</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Customer Info */}
         <div className="space-y-3">
           <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-accent)' }}>
@@ -285,6 +384,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
         {/* Footer Confirm */}
         <div className="pt-4" style={{ borderTop: '1px solid var(--color-rule)' }}>
+          {usePassCredit && (
+            <div className="mb-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center space-x-2">
+              <Zap className="w-4 h-4 flex-shrink-0" />
+              <span>Using 1 Bloom Pass credit — this booking is ₹0</span>
+            </div>
+          )}
           <GradientButton
             fullWidth
             size="lg"

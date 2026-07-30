@@ -1,29 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { X, Award, Share2, Copy, Check, Save } from 'lucide-react';
+import { X, Award, Share2, Copy, Check, Save, Zap } from 'lucide-react';
 import { LiquidGlassCard } from '../ui/LiquidGlassCard';
 import { GradientButton } from '../ui/GradientButton';
 import { useAuthStore } from '../../stores/authStore';
 import { useLoyaltyStore } from '../../stores/loyaltyStore';
+import { useSubscriptionStore } from '../../stores/subscriptionStore';
 import { saveProfile } from '../../lib/auth';
 import { fetchApartments } from '../../lib/booking';
 import { getReferralShareUrl } from '../../lib/referral';
 import { pointsToRupees, getExpiryWarningText } from '../../lib/loyalty';
+import { ActivePassCard } from '../subscription/ActivePassCard';
 
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccessToast?: (msg: string) => void;
+  onOpenPass?: () => void;
 }
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({
   isOpen,
   onClose,
   onSuccessToast,
+  onOpenPass,
 }) => {
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
   const setProfile = useAuthStore((s) => s.setProfile);
   const loyalty = useLoyaltyStore();
+  const activeSubscription = useSubscriptionStore((s) => s.activeSubscription);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -132,6 +137,31 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             </div>
           )}
         </LiquidGlassCard>
+
+        {/* Bloom Pass Card */}
+        {activeSubscription && (
+          <div onClick={() => { onOpenPass?.(); onClose(); }}>
+            <ActivePassCard subscription={activeSubscription} onOpenPass={() => {}} />
+          </div>
+        )}
+
+        {!activeSubscription && (
+          <button
+            onClick={() => { onOpenPass?.(); onClose(); }}
+            className="w-full rounded-2xl bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-orange-500/10 border border-amber-500/30 p-4 text-left hover:bg-amber-500/20 transition-colors group"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                <Zap className="w-5 h-5 text-slate-950" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-white font-outfit">Bloom Pass</p>
+                <p className="text-xs text-amber-300">Save up to 25% with a monthly pass</p>
+              </div>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500 text-slate-950">New</span>
+            </div>
+          </button>
+        )}
 
         {/* Referral Card */}
         <LiquidGlassCard title="Refer a Friend & Earn ₹200" gradient="purple" badge="Invite">

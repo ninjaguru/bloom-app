@@ -7,11 +7,14 @@ import { useLoyaltyStore } from '../../stores/loyaltyStore';
 import { useCartStore } from '../../stores/cartStore';
 import { logout } from '../../lib/auth';
 
+import { Zap } from 'lucide-react';
+
 interface HeaderProps {
   onOpenLogin: () => void;
   onOpenProfile: () => void;
   onOpenBookings: () => void;
   onOpenCart: () => void;
+  onOpenPass: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenProfile,
   onOpenBookings,
   onOpenCart,
+  onOpenPass,
 }) => {
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
@@ -39,7 +43,21 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Navigation & Controls */}
-        <div className="flex items-center space-x-3 sm:space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <button
+            onClick={onOpenPass}
+            className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition-colors"
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span>Bloom Pass</span>
+          </button>
+          <button
+            onClick={onOpenPass}
+            className="sm:hidden p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition-colors"
+            aria-label="Bloom Pass"
+          >
+            <Zap className="w-5 h-5" />
+          </button>
           <NotificationBell />
 
           <ProfileDropdown

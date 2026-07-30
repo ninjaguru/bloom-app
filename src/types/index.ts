@@ -112,3 +112,42 @@ export interface Slot {
   societies?: string[];
   order?: number;
 }
+
+// ── Subscription / Bloom Pass ──
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  gender: 'women' | 'men' | 'both';
+  credits: number;
+  durationDays: number;
+  description: string;
+  features: string[];
+  active: boolean;
+  tag?: string;
+}
+
+export interface CustomerSubscription {
+  id: string;
+  customerUid: string;
+  planId: string;
+  planName: string;
+  creditsTotal: number;
+  creditsUsed: number;
+  startDate: Timestamp | { toDate: () => Date };
+  endDate: Timestamp | { toDate: () => Date };
+  active: boolean;
+  autoRenew: boolean;
+  createdAt: Timestamp | { toDate: () => Date };
+}
+
+// ── Add-ons ──
+export interface ServiceAddon {
+  id: string;
+  title: string;
+  price: number;
+  durationMinutes: number;
+  description?: string;
+  active: boolean;
+}

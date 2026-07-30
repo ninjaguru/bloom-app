@@ -19,6 +19,7 @@ import { BookingModal } from './components/booking/BookingModal';
 import { LoginModal } from './components/auth/LoginModal';
 import { ProfileModal } from './components/auth/ProfileModal';
 import { BookingsModal } from './components/auth/BookingsModal';
+import { PassModal } from './components/subscription/PassModal';
 import { NotificationBanner } from './components/notifications/NotificationBanner';
 import { InstallBanner } from './components/layout/InstallBanner';
 import { Check } from 'lucide-react';
@@ -35,6 +36,7 @@ export default function App() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [bookingsOpen, setBookingsOpen] = useState(false);
+  const [passOpen, setPassOpen] = useState(false);
 
   // Recently viewed re-render trigger
   const [recentKey, setRecentKey] = useState(0);
@@ -75,11 +77,12 @@ export default function App() {
       <PromoBanner />
 
       <Header
-        onOpenLogin={() => setLoginOpen(true)}
-        onOpenProfile={() => setProfileOpen(true)}
-        onOpenBookings={() => setBookingsOpen(true)}
-        onOpenCart={() => setCartOpen(true)}
-      />
+          onOpenLogin={() => setLoginOpen(true)}
+          onOpenProfile={() => setProfileOpen(true)}
+          onOpenBookings={() => setBookingsOpen(true)}
+          onOpenCart={() => setCartOpen(true)}
+          onOpenPass={() => setPassOpen(true)}
+        />
 
       <main className="flex-1">
         <Hero gender={gender} onGenderChange={handleGenderChange} />
@@ -123,6 +126,12 @@ export default function App() {
         onSuccessToast={showToast}
       />
 
+      <PassModal
+        isOpen={passOpen}
+        onClose={() => setPassOpen(false)}
+        onSuccessToast={showToast}
+      />
+
       <LoginModal
         isOpen={loginOpen}
         onClose={() => setLoginOpen(false)}
@@ -132,6 +141,7 @@ export default function App() {
         isOpen={profileOpen}
         onClose={() => setProfileOpen(false)}
         onSuccessToast={showToast}
+        onOpenPass={() => setPassOpen(true)}
       />
 
       <BookingsModal

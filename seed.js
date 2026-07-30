@@ -732,6 +732,58 @@ const services = [
   },
 ];
 
+// ── Subscription Plans ──
+const subscriptionPlans = [
+  {
+    name: 'Bloom Pass Lite',
+    price: 1499,
+    originalPrice: 1999,
+    gender: 'both',
+    credits: 2,
+    durationDays: 30,
+    description: 'Perfect for trying us out — 2 premium services in 30 days.',
+    features: ['Any 2 services from our menu', 'Save 25% vs pay-per-use', 'Flexible booking'],
+    active: true,
+    tag: 'Popular',
+  },
+  {
+    name: 'Bloom Pass Standard',
+    price: 2699,
+    originalPrice: 3999,
+    gender: 'both',
+    credits: 4,
+    durationDays: 30,
+    description: 'Our best value — 4 premium services every month.',
+    features: ['Any 4 services from our menu', 'Save 33% vs pay-per-use', 'Priority booking', 'Free rescheduling'],
+    active: true,
+    tag: 'Best Value',
+  },
+  {
+    name: 'Bloom Pass Unlimited',
+    price: 4999,
+    originalPrice: 7999,
+    gender: 'both',
+    credits: 8,
+    durationDays: 30,
+    description: 'For the full glow-up — 8 services every month.',
+    features: ['Any 8 services from our menu', 'Save 38% vs pay-per-use', 'Priority booking', 'Free rescheduling', 'Exclusive VIP offers'],
+    active: true,
+    tag: 'Premium',
+  },
+];
+
+// ── Service Add-ons ──
+const serviceAddons = [
+  { title: 'Head Massage (15 min)', price: 299, durationMinutes: 15, description: 'Relaxing scalp and shoulder massage', active: true },
+  { title: 'Underarm Wax', price: 199, durationMinutes: 10, description: 'Quick and gentle underarm waxing', active: true },
+  { title: 'Face Steaming', price: 149, durationMinutes: 10, description: 'Deep pore cleansing with herbal steam', active: true },
+  { title: 'Paraffin Wax Dip (Hands)', price: 399, durationMinutes: 20, description: 'Luxurious paraffin wax treatment for hands', active: true },
+  { title: 'Paraffin Wax Dip (Feet)', price: 399, durationMinutes: 20, description: 'Luxurious paraffin wax treatment for feet', active: true },
+  { title: 'Hair Serum Treatment', price: 249, durationMinutes: 10, description: 'Leave-in serum with heat protection', active: true },
+  { title: 'Eye Mask De-Puffing', price: 199, durationMinutes: 15, description: 'Cooling gel eye mask with cucumber extract', active: true },
+  { title: 'Neck & Shoulder Massage', price: 349, durationMinutes: 15, description: 'Tension relief with warm herbal oils', active: true },
+];
+
 async function seed() {
   console.log(`\n🌿 Seeding ${services.length} Bloom Salon services from Urban Company Salon Luxe...\n`);
 
@@ -741,7 +793,21 @@ async function seed() {
     console.log(`  ✓ ${service.gender.toUpperCase().padEnd(6)} | ${service.category.padEnd(22)} | ${service.title}`);
   }
 
-  console.log(`\n✅ Successfully seeded ${services.length} services!\n`);
+  console.log(`\n📦 Seeding ${subscriptionPlans.length} subscription plans...`);
+  for (const plan of subscriptionPlans) {
+    const docRef = doc(db, 'subscriptionPlans', plan.name.toLowerCase().replace(/\s+/g, '-'));
+    await setDoc(docRef, plan);
+    console.log(`  ✓ ${plan.name}`);
+  }
+
+  console.log(`\n🔧 Seeding ${serviceAddons.length} service add-ons...`);
+  for (const addon of serviceAddons) {
+    const docRef = doc(db, 'serviceAddons', addon.title.toLowerCase().replace(/\s+/g, '-'));
+    await setDoc(docRef, { ...addon, serviceId: '_general' });
+    console.log(`  ✓ ${addon.title}`);
+  }
+
+  console.log(`\n✅ Successfully seeded everything!\n`);
   process.exit(0);
 }
 

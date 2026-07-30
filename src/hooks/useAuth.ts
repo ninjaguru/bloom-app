@@ -5,10 +5,12 @@ import { getLoyaltyBalance } from '../lib/loyalty';
 import { useAuthStore } from '../stores/authStore';
 import { useNotificationsStore } from '../stores/notificationsStore';
 import { useLoyaltyStore } from '../stores/loyaltyStore';
+import { useSubscriptionStore } from '../stores/subscriptionStore';
 import { useCartStore } from '../stores/cartStore';
 import { db } from '../lib/firebase';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { AppNotification } from '../types';
+import { getActiveSubscription } from '../lib/subscriptions';
 
 export function useAuth() {
   const setUser = useAuthStore((s) => s.setUser);
@@ -16,6 +18,7 @@ export function useAuth() {
   const setNotifications = useNotificationsStore((s) => s.setNotifications);
   const setLoyaltyBalance = useLoyaltyStore((s) => s.setBalance);
   const setLoyaltyLoading = useLoyaltyStore((s) => s.setLoading);
+  const setActiveSubscription = useSubscriptionStore((s) => s.setActiveSubscription);
   const clearLoyaltyPoints = useCartStore((s) => s.clearLoyaltyPoints);
 
   useEffect(() => {
@@ -51,6 +54,10 @@ export function useAuth() {
           const loyalty = await getLoyaltyBalance(user.uid);
           setLoyaltyBalance(loyalty.available, loyalty.nextExpiry);
           setLoyaltyLoading(false);
+
+          // Fetch active subscription
+          const sub = await getActiveSubscription(user.uid);
+          setActiveSubscription(sub);
         } catch (err) {
           console.warn('Error loading user data:', err);
           setLoyaltyLoading(false);
@@ -60,6 +67,7 @@ export function useAuth() {
         setProfile(null);
         setNotifications([]);
         setLoyaltyBalance(0, null);
+        setActiveSubscription(null);
         clearLoyaltyPoints();
       }
     });
@@ -68,5 +76,5 @@ export function useAuth() {
       unsubscribeAuth();
       if (notifUnsubscribe) notifUnsubscribe();
     };
-  }, [setUser, setProfile, setNotifications, setLoyaltyBalance, setLoyaltyLoading, clearLoyaltyPoints]);
+  }, [setUser, setProfile, setNotifications, setLoyaltyBalance, setLoyaltyLoading, setActiveSubscription, clearLoyaltyPoints]);
 }

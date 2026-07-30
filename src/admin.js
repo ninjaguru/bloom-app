@@ -15,6 +15,8 @@ import {
   query,
   where,
   Timestamp,
+  serverTimestamp,
+  writeBatch,
 } from 'firebase/firestore';
 
 /* ================================================================
@@ -113,6 +115,7 @@ async function loadAllData() {
     renderBundlesTab(allBundles);
     renderApartmentsTab(allSocieties);
     renderStaffMgmtTab(allStylists);
+    renderBroadcastTab();
   } catch (err) {
     console.error('Data load failed:', err);
     showToast('Failed to load data. Check Firestore rules.');
@@ -2014,6 +2017,131 @@ document.getElementById('slot-delete').addEventListener('click', async () => {
     document.getElementById('slot-error').textContent = 'Delete failed.';
     btn.disabled    = false;
     btn.textContent = '🗑 Delete';
+  }
+});
+
+/* ================================================================
+   BROADCAST — Send Push Notification
+   ================================================================ */
+let broadcastHistory = [];
+
+async function renderBroadcastTab() {
+  try {
+    const snap = await getDocs(
+      query(collection(db, 'adminBroadcasts'), orderBy('createdAt', 'desc'))
+    );
+    broadcastHistory = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const el = document.getElementById('broadcast-history');
+    if (broadcastHistory.length === 0) {
+      el.innerHTML = '<p>No broadcasts sent yet.</p>';
+    } else {
+      el.innerHTML = broadcastHistory.map((b) => {
+        const statusClass = b.status === 'sent' ? 'color:var(--color-success)' :
+                            b.status === 'failed' ? 'color:var(--color-danger)' : 'color:var(--color-accent)';
+        const date = b.createdAt?.toDate?.() || new Date();
+        const dateStr = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        return `<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:8px;padding:12px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <strong style="color:var(--color-text-primary)">${escHtml(b.title)}</strong>
+            <span style="${statusClass};font-size:0.75rem;font-weight:500">${b.status}</span>
+          </div>
+          <p style="color:var(--color-text-secondary);font-size:0.8rem;margin-bottom:2px">${escHtml(b.body)}</p>
+          <p style="color:var(--color-text-muted);font-size:0.7rem">${dateStr} · ${b.recipientCount || 0} recipients</p>
+        </div>`;
+      }).join('');
+    }
+  } catch (err) {
+    console.error('Load broadcast history error:', err);
+  }
+}
+
+function escHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+document.getElementById('broadcast-send-btn')?.addEventListener('click', () => {
+  const title = document.getElementById('broadcast-title').value.trim();
+  const body  = document.getElementById('broadcast-body').value.trim();
+  const statusEl = document.getElementById('broadcast-status');
+
+  if (!title || !body) {
+    statusEl.textContent = 'Please enter both title and body.';
+    statusEl.style.color = 'var(--color-danger)';
+    return;
+  }
+
+  document.getElementById('broadcast-preview-title').textContent = title;
+  document.getElementById('broadcast-preview-body').textContent = body;
+  document.getElementById('broadcast-error').textContent = '';
+  document.getElementById('broadcast-overlay').style.display = 'flex';
+});
+
+document.getElementById('broadcast-cancel')?.addEventListener('click', closeBroadcastModal);
+document.getElementById('broadcast-close')?.addEventListener('click', closeBroadcastModal);
+
+function closeBroadcastModal() {
+  document.getElementById('broadcast-overlay').style.display = 'none';
+}
+
+document.getElementById('broadcast-confirm-send')?.addEventListener('click', async () => {
+  const title   = document.getElementById('broadcast-title').value.trim();
+  const body    = document.getElementById('broadcast-body').value.trim();
+  const btn     = document.getElementById('broadcast-confirm-send');
+  const statusEl = document.getElementById('broadcast-status');
+  const errorEl = document.getElementById('broadcast-error');
+
+  btn.disabled    = true;
+  btn.textContent = 'Sending…';
+  errorEl.textContent = '';
+
+  try {
+    const docRef = await addDoc(collection(db, 'adminBroadcasts'), {
+      title,
+      body,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+      recipientCount: 0,
+    });
+
+    // Attempt to send via Firebase Functions HTTP endpoint if deployed
+    // Otherwise, fallback: write as pending and let Cloud Function process it
+    closeBroadcastModal();
+    document.getElementById('broadcast-title').value = '';
+    document.getElementById('broadcast-body').value  = '';
+    statusEl.textContent = '📨 Notification queued for delivery.';
+    statusEl.style.color = 'var(--color-success)';
+    showToast('Broadcast queued — will be delivered shortly');
+
+    // Immediately write notification to all customer sub-collections as fallback
+    try {
+      const customersSnap = await getDocs(collection(db, 'customers'));
+      const batch = writeBatch(db);
+      let count = 0;
+      customersSnap.docs.forEach((c) => {
+        const notifRef = doc(collection(db, 'customers', c.id, 'notifications'));
+        batch.set(notifRef, { title, body, read: false, createdAt: serverTimestamp() });
+        count++;
+      });
+      if (count > 0) {
+        await batch.commit();
+        await updateDoc(doc(db, 'adminBroadcasts', docRef.id), { recipientCount: count, status: 'sent' });
+      }
+    } catch (fallbackErr) {
+      console.warn('Fallback notification write failed:', fallbackErr);
+    }
+
+    renderBroadcastTab();
+  } catch (err) {
+    console.error('Broadcast send error:', err);
+    errorEl.textContent = 'Failed to queue notification.';
+    closeBroadcastModal();
+    statusEl.textContent = 'Failed to send.';
+    statusEl.style.color = 'var(--color-danger)';
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Send to All';
   }
 });
 
