@@ -8,6 +8,7 @@ import {
   fetchSlotsForApartment,
   getAvailableDates,
   buildWhatsAppMessage,
+  filterPastSlots,
   WHATSAPP_NUMBER,
 } from '../../lib/booking';
 import { useCartStore, selectCartTotals } from '../../stores/cartStore';
@@ -68,6 +69,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     : 0;
   const hasCredits = remainingCredits > 0;
 
+  const visibleSlots = selectedDate ? filterPastSlots(selectedDate, slots) : slots;
+
   useEffect(() => {
     if (isOpen) {
       fetchApartments().then(setApartmentList);
@@ -99,6 +102,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       });
     }
   };
+
+  useEffect(() => {
+    if (selectedSlot && visibleSlots.length > 0 && !visibleSlots.includes(selectedSlot)) {
+      setSelectedSlot(null);
+    }
+  }, [selectedSlot, visibleSlots]);
 
   const toggleAddon = (addon: ServiceAddon) => {
     const exists = selectedAddons.find((a) => a.id === addon.id);
@@ -362,7 +371,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <span>Select time slot</span>
             </h3>
             <SlotPicker
-              slots={slots}
+              slots={visibleSlots}
               selectedSlot={selectedSlot}
               onSelectSlot={setSelectedSlot}
               loading={loadingSlots}

@@ -105,6 +105,48 @@ export interface DateItem {
   sublabel: string;
 }
 
+/** Parse a slot string like "10:00 AM – 12:00 PM" into a start Date for a given date. */
+export function parseSlotStart(dateValue: string, slot: string): Date {
+  const parts = slot.split(/[–-]/);
+  let startStr = (parts[0] || '').trim();
+  if (!startStr) return new Date(dateValue + 'T23:59:59');
+
+  // Determine meridian: start time may carry its own, otherwise inherit the last one in the slot.
+  let meridian = 'AM';
+  const meridianMatch = slot.match(/(AM|PM)/gi);
+  if (meridianMatch && meridianMatch.length > 0) {
+    meridian = meridianMatch[meridianMatch.length - 1].toUpperCase();
+  }
+  const startHasOwnMeridian = /(AM|PM)/i.test(startStr);
+  if (startHasOwnMeridian) {
+    const m = startStr.match(/(AM|PM)/i);
+    meridian = m ? m[1].toUpperCase() : meridian;
+    startStr = startStr.replace(/(AM|PM)/i, '').trim();
+  }
+
+  const [hStr, mStr] = startStr.split(':');
+  let hour = parseInt(hStr, 10) || 0;
+  const minute = parseInt(mStr, 10) || 0;
+
+  if (meridian === 'AM' && hour === 12) hour = 0;
+  if (meridian === 'PM' && hour < 12) hour += 12;
+
+  const date = new Date(dateValue + 'T00:00:00');
+  date.setHours(hour, minute, 0, 0);
+  return date;
+}
+
+/** Filter out slots that have already started for the given date. */
+export function filterPastSlots(dateValue: string, slots: string[]): string[] {
+  const today = new Date().toISOString().split('T')[0];
+  if (dateValue !== today) return slots;
+  const now = new Date();
+  return slots.filter((slot) => {
+    const start = parseSlotStart(dateValue, slot);
+    return start.getTime() > now.getTime();
+  });
+}
+
 export function getAvailableDates(): DateItem[] {
   const dates: DateItem[] = [];
   const today = new Date();
