@@ -1,46 +1,64 @@
 import React, { useEffect, useState } from 'react';
-import { X, Check, Sparkles, Award, Zap } from 'lucide-react';
+import { Check, Sparkles, Award, Zap, AlertTriangle } from 'lucide-react';
 import { SmoothDrawer } from '../ui/SmoothDrawer';
 import { GradientButton } from '../ui/GradientButton';
 import { useAuthStore } from '../../stores/authStore';
 import { useSubscriptionStore } from '../../stores/subscriptionStore';
-import { getSubscriptionPlans, purchaseSubscription } from '../../lib/subscriptions';
+import { getSubscriptionPlans, purchaseSubscription, getActiveSubscription } from '../../lib/subscriptions';
 import { SubscriptionPlan } from '../../types';
 
 interface PassModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccessToast?: (msg: string) => void;
+  onOpenLogin?: () => void;
 }
 
-export const PassModal: React.FC<PassModalProps> = ({ isOpen, onClose, onSuccessToast }) => {
+export const PassModal: React.FC<PassModalProps> = ({ isOpen, onClose, onSuccessToast, onOpenLogin }) => {
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
   const plans = useSubscriptionStore((s) => s.plans);
   const setPlans = useSubscriptionStore((s) => s.setPlans);
+  const setActiveSubscription = useSubscriptionStore((s) => s.setActiveSubscription);
   const [loading, setLoading] = useState(false);
   const [purchasing, setPurchasing] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const gender = (profile as any)?.gender || 'women';
 
   useEffect(() => {
     if (isOpen && plans.length === 0) {
       setLoading(true);
-      getSubscriptionPlans(gender).then((data) => {
-        setPlans(data);
-        setLoading(false);
-      });
+      setErrorMsg(null);
+      getSubscriptionPlans(gender)
+        .then((data) => {
+          setPlans(data);
+          if (data.length === 0) {
+            setErrorMsg('No Bloom Pass plans available right now. Please try again later.');
+          }
+        })
+        .catch(() => setErrorMsg('Could not load plans. Please try again.'))
+        .finally(() => setLoading(false));
     }
   }, [isOpen, gender]);
 
   const handlePurchase = async (plan: SubscriptionPlan) => {
-    if (!user) return;
+    if (!user) {
+      onClose();
+      onOpenLogin?.();
+      return;
+    }
     setPurchasing(plan.id);
+    setErrorMsg(null);
     const subId = await purchaseSubscription(user.uid, plan);
     setPurchasing(null);
     if (subId) {
+      const sub = await getActiveSubscription(user.uid);
+      setActiveSubscription(sub);
       onClose();
       if (onSuccessToast) onSuccessToast(`Bloom Pass "${plan.name}" activated!`);
+    } else {
+      setErrorMsg('Purchase failed. Check that your notification permissions are enabled, then try again.');
     }
   };
 
@@ -65,6 +83,22 @@ export const PassModal: React.FC<PassModalProps> = ({ isOpen, onClose, onSuccess
         {loading && (
           <div className="flex justify-center py-8">
             <div className="w-8 h-8 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+          </div>
+        )}
+
+        {errorMsg && (
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {!user && !loading && (
+          <div className="text-center p-6 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <p className="text-sm text-slate-300 mb-4">Sign in to purchase a Bloom Pass</p>
+            <GradientButton fullWidth size="md" onClick={() => { onClose(); onOpenLogin?.(); }}>
+              Sign In to Continue
+            </GradientButton>
           </div>
         )}
 

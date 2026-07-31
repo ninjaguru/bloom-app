@@ -130,6 +130,7 @@ export default function App() {
         isOpen={passOpen}
         onClose={() => setPassOpen(false)}
         onSuccessToast={showToast}
+        onOpenLogin={() => setLoginOpen(true)}
       />
 
       <LoginModal
