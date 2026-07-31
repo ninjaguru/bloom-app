@@ -80,10 +80,11 @@ let allCoupons   = [];
 let allSocieties = [];
 let allStylists  = [];
 let allBundles   = [];
+let allPlans     = [];
 
 async function loadAllData() {
   try {
-    const [ordersSnap, servicesSnap, productsSnap, slotsSnap, couponsSnap, societiesSnap, stylistsSnap, bundlesSnap] = await Promise.all([
+    const [ordersSnap, servicesSnap, productsSnap, slotsSnap, couponsSnap, societiesSnap, stylistsSnap, bundlesSnap, plansSnap] = await Promise.all([
       getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'))),
       getDocs(collection(db, 'services')),
       getDocs(collection(db, 'products')),
@@ -92,6 +93,7 @@ async function loadAllData() {
       getDocs(query(collection(db, 'societies'), orderBy('name', 'asc'))),
       getDocs(collection(db, 'stylists')),
       getDocs(collection(db, 'bundles')),
+      getDocs(collection(db, 'subscriptionPlans')),
     ]);
 
     allOrders    = ordersSnap.docs.map((d)    => ({ id: d.id, ...d.data() }));
@@ -102,6 +104,7 @@ async function loadAllData() {
     allSocieties = societiesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     allStylists  = stylistsSnap.docs.map((d)  => ({ id: d.id, ...d.data() }));
     allBundles   = bundlesSnap.docs.map((d)   => ({ id: d.id, ...d.data() }));
+    allPlans     = plansSnap.docs.map((d)     => ({ id: d.id, ...d.data() }));
 
     renderKPIs(allOrders);
     renderBookingsTable(allOrders, allStylists);
@@ -115,6 +118,7 @@ async function loadAllData() {
     renderBundlesTab(allBundles);
     renderApartmentsTab(allSocieties);
     renderStaffMgmtTab(allStylists);
+    renderPlansTab(allPlans);
     renderBroadcastTab();
   } catch (err) {
     console.error('Data load failed:', err);
@@ -2015,6 +2019,183 @@ document.getElementById('slot-delete').addEventListener('click', async () => {
   } catch (err) {
     console.error(err);
     document.getElementById('slot-error').textContent = 'Delete failed.';
+    btn.disabled    = false;
+    btn.textContent = '🗑 Delete';
+  }
+});
+
+/* ================================================================
+   PLANS TAB — Bloom Pass subscription plans
+   ================================================================ */
+function renderPlansTab(plans) {
+  const tbody = document.getElementById('plans-tbody');
+  if (!tbody) return;
+  if (!plans.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="table-empty"><p>No plans yet. Create your first Bloom Pass plan.</p></div></td></tr>`;
+    return;
+  }
+
+  const sorted = [...plans].sort((a, b) => {
+    const ta = a.createdAt?.toDate?.() || new Date(0);
+    const tb = b.createdAt?.toDate?.() || new Date(0);
+    return tb - ta;
+  });
+
+  tbody.innerHTML = sorted.map((p) => {
+    const activeBadge = p.active !== false
+      ? `<span class="status-badge status-completed">Active</span>`
+      : `<span class="status-badge status-cancelled">Inactive</span>`;
+    const genderLabel = p.gender === 'women' ? 'Women' : p.gender === 'men' ? 'Men' : 'Both';
+    const savings = p.originalPrice
+      ? Math.round((1 - p.price / p.originalPrice) * 100)
+      : 0;
+    const savingsHtml = savings > 0
+      ? `<span style="color:var(--color-success);font-weight:600">${savings}%</span>`
+      : '—';
+
+    return `
+      <tr>
+        <td>
+          <div style="font-weight:600;color:var(--color-text-primary)">${escHtml(p.name || '—')}</div>
+          ${p.tag ? `<span class="service-tag" style="background:var(--color-gold);color:var(--color-accent-ink);font-weight:700">${escHtml(p.tag)}</span>` : ''}
+        </td>
+        <td style="color:var(--color-text-secondary)">${genderLabel}</td>
+        <td style="font-weight:700">${p.credits ?? 0}</td>
+        <td style="color:var(--color-text-muted)">${p.durationDays ?? 30} days</td>
+        <td style="color:var(--color-text-muted);text-decoration:line-through">${p.originalPrice ? `₹${p.originalPrice.toLocaleString('en-IN')}` : '—'}</td>
+        <td style="font-weight:700;color:var(--color-gold)">₹${(p.price || 0).toLocaleString('en-IN')}</td>
+        <td>${savingsHtml}</td>
+        <td>${activeBadge}</td>
+        <td><button class="action-btn edit-svc-btn plan-edit-btn" data-plan-id="${p.id}">✎ Edit</button></td>
+      </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.plan-edit-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const plan = allPlans.find((p) => p.id === btn.dataset.planId);
+      if (plan) openPlanModal(plan);
+    });
+  });
+}
+
+/* ================================================================
+   PLAN CRUD MODAL
+   ================================================================ */
+let _editingPlanId = null;
+
+function openPlanModal(plan) {
+  _editingPlanId = plan ? plan.id : null;
+  const isEdit = !!plan;
+
+  document.getElementById('plan-modal-title').textContent = isEdit ? 'Edit Plan' : 'Create Plan';
+  document.getElementById('plan-name').value           = plan?.name   || '';
+  document.getElementById('plan-price').value          = plan?.price  ?? '';
+  document.getElementById('plan-original-price').value = plan?.originalPrice ?? '';
+  document.getElementById('plan-credits').value        = plan?.credits ?? '';
+  document.getElementById('plan-duration').value       = plan?.durationDays ?? '30';
+  document.getElementById('plan-gender').value         = plan?.gender || 'both';
+  document.getElementById('plan-tag').value            = plan?.tag    || '';
+  document.getElementById('plan-description').value    = plan?.description || '';
+  document.getElementById('plan-features').value       = (plan?.features || []).join('\n');
+  document.getElementById('plan-active').value         = String(plan?.active ?? true);
+
+  document.getElementById('plan-error').textContent    = '';
+  document.getElementById('plan-delete').style.display = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('plan-save').textContent     = isEdit ? 'Save Changes' : 'Create Plan';
+  document.getElementById('plan-overlay').classList.add('open');
+}
+
+function closePlanModal() {
+  document.getElementById('plan-overlay').classList.remove('open');
+  _editingPlanId = null;
+}
+
+document.getElementById('add-plan-btn').addEventListener('click', () => openPlanModal(null));
+document.getElementById('plan-close').addEventListener('click', closePlanModal);
+document.getElementById('plan-cancel').addEventListener('click', closePlanModal);
+document.getElementById('plan-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('plan-overlay')) closePlanModal();
+});
+
+document.getElementById('plan-save').addEventListener('click', async () => {
+  const name        = document.getElementById('plan-name').value.trim();
+  const price       = parseFloat(document.getElementById('plan-price').value);
+  const originalPrice = parseFloat(document.getElementById('plan-original-price').value) || 0;
+  const credits     = parseInt(document.getElementById('plan-credits').value, 10);
+  const durationDays = parseInt(document.getElementById('plan-duration').value, 10);
+  const gender      = document.getElementById('plan-gender').value;
+  const tag         = document.getElementById('plan-tag').value.trim();
+  const description = document.getElementById('plan-description').value.trim();
+  const features    = document.getElementById('plan-features').value.split('\n').map((f) => f.trim()).filter(Boolean);
+  const active      = document.getElementById('plan-active').value === 'true';
+  const errorEl     = document.getElementById('plan-error');
+  const saveBtn     = document.getElementById('plan-save');
+
+  if (!name)                       { errorEl.textContent = 'Plan name is required.'; return; }
+  if (isNaN(price) || price <= 0)  { errorEl.textContent = 'Enter a valid price.'; return; }
+  if (isNaN(credits) || credits <= 0) { errorEl.textContent = 'Credits must be at least 1.'; return; }
+  if (isNaN(durationDays) || durationDays <= 0) { errorEl.textContent = 'Duration must be a positive number of days.'; return; }
+  if (originalPrice && originalPrice < price)    { errorEl.textContent = 'Original price should be >= sale price.'; return; }
+
+  const data = {
+    name,
+    price,
+    originalPrice: originalPrice || null,
+    credits,
+    durationDays,
+    gender,
+    tag: tag || null,
+    description,
+    features,
+    active,
+  };
+
+  saveBtn.disabled    = true;
+  const origText      = saveBtn.textContent;
+  saveBtn.textContent = 'Saving…';
+  errorEl.textContent = '';
+
+  try {
+    if (_editingPlanId) {
+      await updateDoc(doc(db, 'subscriptionPlans', _editingPlanId), data);
+      const idx = allPlans.findIndex((p) => p.id === _editingPlanId);
+      if (idx !== -1) Object.assign(allPlans[idx], data);
+      showToast('Plan updated');
+    } else {
+      const newData = { ...data, createdAt: Timestamp.now() };
+      const ref = await addDoc(collection(db, 'subscriptionPlans'), newData);
+      allPlans.push({ id: ref.id, ...newData });
+      showToast(`Plan "${name}" created`);
+    }
+    closePlanModal();
+    renderPlansTab(allPlans);
+  } catch (err) {
+    console.error(err);
+    errorEl.textContent = 'Operation failed. Check Firestore permissions.';
+  } finally {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = origText;
+  }
+});
+
+document.getElementById('plan-delete').addEventListener('click', async () => {
+  if (!_editingPlanId) return;
+  const plan = allPlans.find((p) => p.id === _editingPlanId);
+  if (!confirm(`Delete plan "${plan?.name}"? This cannot be undone.`)) return;
+
+  const btn = document.getElementById('plan-delete');
+  btn.disabled    = true;
+  btn.textContent = 'Deleting…';
+
+  try {
+    await deleteDoc(doc(db, 'subscriptionPlans', _editingPlanId));
+    allPlans = allPlans.filter((p) => p.id !== _editingPlanId);
+    closePlanModal();
+    renderPlansTab(allPlans);
+    showToast('Plan deleted');
+  } catch (err) {
+    console.error(err);
+    document.getElementById('plan-error').textContent = 'Delete failed.';
     btn.disabled    = false;
     btn.textContent = '🗑 Delete';
   }

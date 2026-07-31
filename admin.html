@@ -86,6 +86,7 @@
         <button class="tab-btn" data-tab="inventory">🗂 Inventory</button>
         <button class="tab-btn" data-tab="staff">📅 Schedule</button>
         <button class="tab-btn" data-tab="reports">📊 Reports</button>
+        <button class="tab-btn" data-tab="plans">🎫 Plans</button>
         <button class="tab-btn" data-tab="broadcast">📢 Broadcast</button>
       </nav>
 
@@ -928,6 +929,37 @@
     </div>
   </div>
 
+  <!-- ============ TAB: PLANS ============ -->
+  <div class="tab-panel" id="tab-plans">
+    <div class="section-header">
+      <h2 class="section-title">Bloom Pass Plans</h2>
+      <button class="refresh-btn add-svc-btn" id="add-plan-btn">+ Create Plan</button>
+    </div>
+    <p style="font-size:0.82rem;color:var(--color-text-muted);margin-bottom:16px;">
+      Monthly subscription plans shown in the customer's Bloom Pass. Each booking consumes 1 credit.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Plan</th>
+            <th>Gender</th>
+            <th>Credits</th>
+            <th>Duration</th>
+            <th>Original</th>
+            <th>Price</th>
+            <th>Savings</th>
+            <th>Status</th>
+            <th>Edit</th>
+          </tr>
+        </thead>
+        <tbody id="plans-tbody">
+          <tr><td colspan="9"><div class="table-loading"><div class="spinner"></div><p>Loading…</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- ============ TAB: BROADCAST ============ -->
   <div class="tab-panel" id="tab-broadcast">
     <div class="section-header">
@@ -958,6 +990,79 @@
         <div id="broadcast-history" style="font-size:0.82rem;color:var(--color-text-muted)">
           <p>No broadcasts sent yet.</p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PLAN ADD / EDIT MODAL ============ -->
+  <div class="svc-overlay" id="plan-overlay">
+    <div class="svc-modal">
+      <div class="svc-modal-header">
+        <h3 id="plan-modal-title">Create Plan</h3>
+        <button class="svc-close" id="plan-close">✕</button>
+      </div>
+      <div class="svc-modal-body">
+        <div class="svc-form-row">
+          <label>Plan Name</label>
+          <input class="svc-input" id="plan-name" type="text" placeholder="e.g. Bloom Pass Standard" />
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Price (₹)</label>
+            <input class="svc-input" id="plan-price" type="number" min="1" placeholder="e.g. 2699" />
+          </div>
+          <div>
+            <label>Original Price (₹)</label>
+            <input class="svc-input" id="plan-original-price" type="number" min="1" placeholder="e.g. 3999" />
+          </div>
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Credits</label>
+            <input class="svc-input" id="plan-credits" type="number" min="1" placeholder="e.g. 4" />
+          </div>
+          <div>
+            <label>Duration (days)</label>
+            <input class="svc-input" id="plan-duration" type="number" min="1" placeholder="e.g. 30" />
+          </div>
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Gender</label>
+            <select class="svc-input" id="plan-gender">
+              <option value="both">Both</option>
+              <option value="women">Women</option>
+              <option value="men">Men</option>
+            </select>
+          </div>
+          <div>
+            <label>Badge Tag (optional)</label>
+            <input class="svc-input" id="plan-tag" type="text" placeholder="e.g. Best Value" />
+          </div>
+        </div>
+        <div class="svc-form-row">
+          <label>Description</label>
+          <input class="svc-input" id="plan-description" type="text" placeholder="e.g. Any 4 services from our menu" />
+        </div>
+        <div class="svc-form-row">
+          <label>Features (one per line)</label>
+          <textarea class="svc-input" id="plan-features" rows="4" placeholder="Any 4 services from our menu&#10;Save 33% vs pay-per-use&#10;Priority booking"></textarea>
+        </div>
+        <div class="svc-form-row two-col">
+          <div>
+            <label>Status</label>
+            <select class="svc-input" id="plan-active">
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <p class="svc-error" id="plan-error"></p>
+      </div>
+      <div class="svc-modal-footer">
+        <button class="svc-delete-btn" id="plan-delete" style="display:none;">🗑 Delete</button>
+        <button class="svc-cancel-btn" id="plan-cancel">Cancel</button>
+        <button class="svc-save-btn" id="plan-save">Create Plan</button>
       </div>
     </div>
   </div>
