@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Calendar, ShoppingBag, RefreshCw } from 'lucide-react';
 import { db } from '../../lib/firebase';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuthStore } from '../../stores/authStore';
 import { useCartStore } from '../../stores/cartStore';
 import { Service } from '../../types';
@@ -49,21 +49,28 @@ export const BookingsModal: React.FC<BookingsModalProps> = ({
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     if (!isOpen || !user) return;
     setLoading(true);
+    setErrorMsg('');
     getDocs(
-      query(
-        collection(db, 'orders'),
-        where('customerUid', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      )
+      query(collection(db, 'orders'), where('customerUid', '==', user.uid))
     )
       .then((snap) => {
-        setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order)));
+        const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order));
+        items.sort((a, b) => {
+          const ta = a.createdAt?.toDate?.()?.getTime() || 0;
+          const tb = b.createdAt?.toDate?.()?.getTime() || 0;
+          return tb - ta;
+        });
+        setOrders(items);
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error('Load bookings error:', err);
+        setErrorMsg('Could not load your bookings. Please try again.');
+      })
       .finally(() => setLoading(false));
   }, [isOpen, user]);
 
@@ -121,7 +128,16 @@ export const BookingsModal: React.FC<BookingsModalProps> = ({
             </div>
           )}
 
-          {!loading && orders.length === 0 && (
+          {!loading && errorMsg && (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <p className="text-sm font-medium text-rose-400">{errorMsg}</p>
+              <p className="text-xs text-slate-600 mt-1">
+                Make sure you're signed in with the same account used to book.
+              </p>
+            </div>
+          )}
+
+          {!loading && !errorMsg && orders.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <ShoppingBag className="w-12 h-12 text-slate-700 mb-4" />
               <p className="text-sm font-medium text-slate-400">No bookings yet</p>
