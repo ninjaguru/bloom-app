@@ -5,26 +5,37 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+// `beforeinstallprompt` can fire before React mounts — capture it at module scope.
+let deferredPrompt: BeforeInstallPromptEvent | null = null;
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e as BeforeInstallPromptEvent;
+  });
+}
+
 export function usePWAInstall() {
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(
+    () => deferredPrompt
+  );
+  const [isInstalled, setIsInstalled] = useState(
+    () => window.matchMedia('(display-mode: standalone)').matches
+  );
 
   useEffect(() => {
-    // Already installed (standalone mode)
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-      return;
-    }
-
-    const handler = (e: Event) => {
+    const onPrompt = (e: Event) => {
       e.preventDefault();
       setInstallPrompt(e as BeforeInstallPromptEvent);
     };
+    const onInstalled = () => setIsInstalled(true);
 
-    window.addEventListener('beforeinstallprompt', handler);
-    window.addEventListener('appinstalled', () => setIsInstalled(true));
-
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    window.addEventListener('beforeinstallprompt', onPrompt);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onPrompt);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
   }, []);
 
   const install = async () => {
@@ -35,7 +46,7 @@ export function usePWAInstall() {
     setInstallPrompt(null);
   };
 
-  // iOS detection — no beforeinstallprompt, show manual instructions
+  // iOS Safari doesn't fire beforeinstallprompt (until 17.4+); show manual instructions.
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !isInstalled;
   const canInstall = Boolean(installPrompt) || isIOS;
 
