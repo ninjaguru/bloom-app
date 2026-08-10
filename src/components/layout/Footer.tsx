@@ -11,7 +11,7 @@ export const Footer: React.FC = () => {
               <Flower className="w-4 h-4" />
             </div>
             <span className="text-lg font-bold text-white font-outfit">
-              Bloom<span className="text-pink-400"> at Home</span>
+               Bloom<span className="text-pink-400">@ Home</span>
             </span>
             <span className="text-xs text-slate-500 ml-2">| Premium At-Home Beauty</span>
           </div>
@@ -24,7 +24,7 @@ export const Footer: React.FC = () => {
           </div>
 
           <p className="text-xs text-slate-500">
-            &copy; 2026 Bloom at Home. All rights reserved.
+             &copy; 2026 Bloom@ Home. All rights reserved.
           </p>
         </div>
       </div>

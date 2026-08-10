@@ -38,7 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Flower className="w-4 h-5 sm:w-5 sm:h-5 animate-pulse" />
           </div>
           <span className="text-base sm:text-xl font-bold tracking-tight text-white font-outfit">
-            Bloom<span className="text-pink-400"> at Home</span>
+             Bloom<span className="text-pink-400">@ Home</span>
           </span>
         </div>
 

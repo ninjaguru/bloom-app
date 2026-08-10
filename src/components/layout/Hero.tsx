@@ -23,7 +23,7 @@ export const Hero: React.FC<HeroProps> = ({ gender, onGenderChange }) => {
       }}
     >
       <div className="relative mx-auto grid max-w-5xl gap-8 md:grid-cols-[1.35fr_1fr] md:items-end">
-        <div>
+        <div className="order-2 md:order-1">
           <p
             className="mb-3 text-xs font-semibold tracking-wide"
             style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-mono)' }}
@@ -53,14 +53,10 @@ export const Hero: React.FC<HeroProps> = ({ gender, onGenderChange }) => {
           <p className="mt-5 max-w-sm text-[0.95rem] leading-relaxed" style={{ color: 'var(--color-muted)' }}>
             Certified pros bring facials, waxing, massage & grooming to your home — sterile kits, no salon trip required.
           </p>
-
-          <div className="mt-7">
-            <GenderToggle gender={gender} onChange={onGenderChange} />
-          </div>
         </div>
 
         <div
-          className="flex flex-col gap-3 border-t pt-5 md:border-t-0 md:border-l md:pl-8 md:pt-0"
+          className="order-1 md:order-2 flex flex-col gap-3 border-t pt-5 md:border-t-0 md:border-l md:pl-8 md:pt-0"
           style={{ borderColor: 'var(--color-rule)' }}
         >
           {TRUST_MARKS.map(({ icon: Icon, label }) => (
@@ -69,6 +65,9 @@ export const Hero: React.FC<HeroProps> = ({ gender, onGenderChange }) => {
               <span>{label}</span>
             </div>
           ))}
+          <div className="mt-4 md:mt-0">
+            <GenderToggle gender={gender} onChange={onGenderChange} />
+          </div>
         </div>
       </div>
     </section>

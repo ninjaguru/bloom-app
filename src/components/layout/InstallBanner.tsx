@@ -26,7 +26,7 @@ export const InstallBanner: React.FC = () => {
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <p className="text-xs sm:text-sm font-bold text-white">Install Bloom at Home</p>
+             <p className="text-xs sm:text-sm font-bold text-white">Install Bloom@ Home</p>
             {isIOS ? (
               <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 leading-relaxed">
                 Tap <Share className="inline w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-400 mx-0.5" /> then{' '}
