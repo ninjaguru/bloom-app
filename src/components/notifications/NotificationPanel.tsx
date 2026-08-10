@@ -13,7 +13,7 @@ export const NotificationPanel: React.FC = () => {
   if (!panelOpen || !user) return null;
 
   return (
-    <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-4 z-50 animate-in fade-in duration-150">
+    <div className="absolute left-0 right-auto sm:right-0 sm:left-auto mt-2 w-[calc(100vw-2rem)] sm:w-80 md:w-96 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-4 z-50 animate-in fade-in duration-150">
       <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
         <div className="flex items-center space-x-2">
           <Bell className="w-4 h-4 text-pink-400" />

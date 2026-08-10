@@ -55,13 +55,13 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-slate-200 hover:bg-slate-700/80 transition-colors"
+        className="flex items-center space-x-1 sm:space-x-2 px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-slate-200 hover:bg-slate-700/80 transition-colors"
       >
-        <div className="w-7 h-7 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold uppercase">
+        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold uppercase">
           {displayName.charAt(0)}
         </div>
-        <span className="text-sm font-medium max-w-[120px] truncate">{displayName}</span>
-        <ChevronDown className="w-4 h-4 text-slate-400" />
+        <span className="hidden sm:block text-sm font-medium max-w-[120px] truncate">{displayName}</span>
+        <ChevronDown className="hidden sm:block w-4 h-4 text-slate-400" />
       </button>
 
       {isOpen && (
