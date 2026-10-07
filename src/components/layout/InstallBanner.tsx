@@ -16,7 +16,7 @@ export const InstallBanner: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 safe-bottom">
+    <div className="fixed bottom-0 left-0 right-0 z-40 safe-bottom">
       <div className="mx-3 mb-3 sm:mx-4 sm:mb-4 rounded-2xl bg-slate-900/95 border border-pink-500/30 backdrop-blur-xl shadow-2xl shadow-black/50 p-3 sm:p-4 animate-in slide-in-from-bottom duration-300">
         <div className="flex items-start space-x-2 sm:space-x-3">
           {/* Icon */}

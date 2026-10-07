@@ -12,9 +12,9 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
   const removeFromCart = useCartStore((s) => s.removeFromCart);
 
   return (
-    <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 mb-3 shadow-md">
-      <div className="flex-1 pr-4">
-        <h4 className="text-sm font-semibold text-white font-outfit line-clamp-1">
+    <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 mb-3 shadow-md sm:flex-row sm:items-center sm:justify-between">
+      <div className="sm:flex-1 sm:pr-4">
+        <h4 className="text-sm font-semibold text-white font-outfit line-clamp-2 sm:line-clamp-1">
           {item.service.title}
         </h4>
         <p className="text-xs text-slate-400 mt-0.5">
@@ -22,7 +22,7 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
         </p>
       </div>
 
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center justify-between sm:justify-end sm:space-x-3">
         {/* Quantity control */}
         <div className="flex items-center space-x-2 bg-slate-800/90 border border-slate-700/80 rounded-xl px-2 py-1">
           <button

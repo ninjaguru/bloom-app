@@ -63,6 +63,14 @@ export interface CartTotals {
   couponType: 'percent' | 'flat' | null;
 }
 
+export interface SavedAddress {
+  id: string;
+  label: string;
+  apartment: string;
+  flat: string;
+  createdAt?: Timestamp | { toDate: () => Date };
+}
+
 export interface CustomerProfile {
   firstName?: string;
   lastName?: string;

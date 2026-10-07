@@ -9,6 +9,8 @@ import {
   Clock,
   Sparkles,
   ExternalLink,
+  XCircle,
+  CalendarClock,
 } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import {
@@ -22,12 +24,17 @@ import {
   limitToLast,
   getDocs,
   getCountFromServer,
+  updateDoc,
+  doc,
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { useAuthStore } from '../../stores/authStore';
 import { useCartStore } from '../../stores/cartStore';
 import { Service } from '../../types';
 import { GradientButton } from '../ui/GradientButton';
+import { DatePicker } from '../booking/DatePicker';
+import { SlotPicker } from '../booking/SlotPicker';
+import { getAvailableDates, fetchSlotsForApartment, filterPastSlots } from '../../lib/booking';
 
 interface OrderItem {
   serviceId: string;
@@ -46,7 +53,7 @@ interface Order {
   status: string;
   createdAt: { toDate?: () => Date } | null;
   appointment: { date?: string; timeSlot?: string };
-  customer: { name?: string; address?: string };
+  customer: { name?: string; address?: string; apartment?: string; flat?: string };
 }
 
 interface BookingsModalProps {
@@ -129,6 +136,22 @@ export const BookingsModal: React.FC<BookingsModalProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [indexUrl, setIndexUrl] = useState<string | null>(null);
 
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
+  const [cancelSubmittingId, setCancelSubmittingId] = useState<string | null>(null);
+
+  const [reschedulingId, setReschedulingId] = useState<string | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState<string | null>(null);
+  const [rescheduleSlot, setRescheduleSlot] = useState<string | null>(null);
+  const [rescheduleSlots, setRescheduleSlots] = useState<string[]>([]);
+  const [rescheduleLoadingSlots, setRescheduleLoadingSlots] = useState(false);
+  const [rescheduleSubmitting, setRescheduleSubmitting] = useState(false);
+  const [actionError, setActionError] = useState('');
+
+  const rescheduleDates = getAvailableDates();
+  const visibleRescheduleSlots = rescheduleDate
+    ? filterPastSlots(rescheduleDate, rescheduleSlots)
+    : rescheduleSlots;
+
   useEffect(() => {
     if (!isOpen || !user) return;
     setLoading(true);
@@ -160,14 +183,23 @@ export const BookingsModal: React.FC<BookingsModalProps> = ({
         const idx = extractIndexUrl(err);
         if (idx) setIndexUrl(idx);
         setErrorMsg('Could not load your bookings. Please try again.');
-      });
+      })
+      .finally(() => setLoading(false));
 
     getCountFromServer(query(ordersRef, where('customerUid', '==', user.uid)))
       .then((snap) => setTotalCount(snap.data().count))
       .catch(() => setTotalCount(null));
-
-    setLoading(false);
   }, [isOpen, user]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen || !user) return null;
 
@@ -233,6 +265,63 @@ export const BookingsModal: React.FC<BookingsModalProps> = ({
     onClose();
     if (onBookAgainToast) {
       onBookAgainToast(`${order.items.length} service${order.items.length !== 1 ? 's' : ''} added to cart`);
+    }
+  };
+
+  const handleCancelConfirm = async (orderId: string) => {
+    setCancelSubmittingId(orderId);
+    setActionError('');
+    try {
+      await updateDoc(doc(db, 'orders', orderId), { status: 'cancelled' });
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: 'cancelled' } : o)));
+      setCancelingId(null);
+    } catch (err) {
+      console.error('Cancel order error:', err);
+      setActionError('Could not cancel booking. Please try again.');
+    } finally {
+      setCancelSubmittingId(null);
+    }
+  };
+
+  const handleOpenReschedule = (order: Order) => {
+    setActionError('');
+    setReschedulingId(order.id);
+    setRescheduleDate(order.appointment?.date || null);
+    setRescheduleSlot(order.appointment?.timeSlot || null);
+    setRescheduleSlots([]);
+    const apartment = order.customer?.apartment;
+    if (apartment) {
+      setRescheduleLoadingSlots(true);
+      fetchSlotsForApartment(apartment)
+        .then(setRescheduleSlots)
+        .finally(() => setRescheduleLoadingSlots(false));
+    }
+  };
+
+  const handleRescheduleConfirm = async (order: Order) => {
+    if (!rescheduleDate || !rescheduleSlot) {
+      setActionError('Pick a date and time slot.');
+      return;
+    }
+    setRescheduleSubmitting(true);
+    setActionError('');
+    try {
+      await updateDoc(doc(db, 'orders', order.id), {
+        appointment: { date: rescheduleDate, timeSlot: rescheduleSlot },
+      });
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id
+            ? { ...o, appointment: { date: rescheduleDate, timeSlot: rescheduleSlot } }
+            : o
+        )
+      );
+      setReschedulingId(null);
+    } catch (err) {
+      console.error('Reschedule order error:', err);
+      setActionError('Could not reschedule booking. Please try again.');
+    } finally {
+      setRescheduleSubmitting(false);
     }
   };
 
@@ -396,6 +485,83 @@ export const BookingsModal: React.FC<BookingsModalProps> = ({
                       <span>Book Again</span>
                     </GradientButton>
                   </div>
+
+                  {/* Cancel / Reschedule actions */}
+                  {order.status === 'confirmed' && cancelingId !== order.id && reschedulingId !== order.id && (
+                    <div className="flex items-center gap-4 pt-1">
+                      <button
+                        onClick={() => handleOpenReschedule(order)}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-pink-300 transition-colors"
+                      >
+                        <CalendarClock className="w-3.5 h-3.5" />
+                        <span>Reschedule</span>
+                      </button>
+                      <button
+                        onClick={() => { setActionError(''); setCancelingId(order.id); }}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-rose-300 transition-colors"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>Cancel</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Inline cancel confirm */}
+                  {cancelingId === order.id && (
+                    <div className="rounded-xl bg-rose-500/10 border border-rose-500/25 p-3 space-y-2.5">
+                      <p className="text-xs font-medium text-rose-200">Cancel this booking? This can't be undone.</p>
+                      {actionError && <p className="text-xs text-rose-400">{actionError}</p>}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleCancelConfirm(order.id)}
+                          disabled={cancelSubmittingId === order.id}
+                          className="px-3 py-1.5 rounded-lg bg-rose-500 text-white text-xs font-bold hover:bg-rose-600 transition-colors disabled:opacity-50"
+                        >
+                          {cancelSubmittingId === order.id ? 'Cancelling...' : 'Yes, cancel'}
+                        </button>
+                        <button
+                          onClick={() => setCancelingId(null)}
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition-colors"
+                        >
+                          Keep booking
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Inline reschedule panel */}
+                  {reschedulingId === order.id && (
+                    <div className="rounded-xl bg-slate-800/50 border border-slate-700/60 p-3 space-y-2.5">
+                      <p className="text-xs font-bold text-slate-200">Pick a new date & time</p>
+                      <DatePicker
+                        dates={rescheduleDates}
+                        selectedDate={rescheduleDate}
+                        onSelectDate={setRescheduleDate}
+                      />
+                      <SlotPicker
+                        slots={visibleRescheduleSlots}
+                        selectedSlot={rescheduleSlot}
+                        onSelectSlot={setRescheduleSlot}
+                        loading={rescheduleLoadingSlots}
+                      />
+                      {actionError && <p className="text-xs text-rose-400">{actionError}</p>}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleRescheduleConfirm(order)}
+                          disabled={rescheduleSubmitting}
+                          className="px-3 py-1.5 rounded-lg bg-pink-500 text-white text-xs font-bold hover:bg-pink-600 transition-colors disabled:opacity-50"
+                        >
+                          {rescheduleSubmitting ? 'Saving...' : 'Confirm new time'}
+                        </button>
+                        <button
+                          onClick={() => setReschedulingId(null)}
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );

@@ -64,6 +64,11 @@ service cloud.firestore {
       match /loyaltyTransactions/{txnId} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
+
+      // Saved addresses sub-collection
+      match /addresses/{addressId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
     }
 
     // ── Customer subscriptions (own access) ──

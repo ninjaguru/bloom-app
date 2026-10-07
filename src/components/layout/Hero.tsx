@@ -23,7 +23,7 @@ export const Hero: React.FC<HeroProps> = ({ gender, onGenderChange }) => {
       }}
     >
       <div className="relative mx-auto grid max-w-5xl gap-8 md:grid-cols-[1.35fr_1fr] md:items-end">
-        <div className="order-2 md:order-1">
+        <div className="md:order-1">
           <p
             className="mb-3 text-xs font-semibold tracking-wide"
             style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-mono)' }}
@@ -56,7 +56,7 @@ export const Hero: React.FC<HeroProps> = ({ gender, onGenderChange }) => {
         </div>
 
         <div
-          className="order-1 md:order-2 flex flex-col gap-3 border-t pt-5 md:border-t-0 md:border-l md:pl-8 md:pt-0"
+          className="md:order-2 flex flex-col gap-3 border-t pt-5 md:border-t-0 md:border-l md:pl-8 md:pt-0"
           style={{ borderColor: 'var(--color-rule)' }}
         >
           {TRUST_MARKS.map(({ icon: Icon, label }) => (

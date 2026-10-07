@@ -22,6 +22,16 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
     if (service) addRecentlyViewed(service);
   }, [service?.id]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && service) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [service, onClose]);
+
   if (!service) return null;
 
   const key = service.serviceId || service.id;
@@ -49,6 +59,9 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
               src={service.imageUrl}
               alt={service.title}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-pink-500/30">
@@ -112,21 +125,24 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
               </h4>
 
               {/* Scrollable tab pills */}
-              <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-none -mx-1 px-1">
-                {steps.map((step, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveStepIndex(idx)}
-                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 border whitespace-nowrap ${
-                      idx === activeStepIndex
-                        ? 'bg-pink-600 border-pink-500 text-white shadow-lg shadow-pink-900/30'
-                        : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white'
-                    }`}
-                  >
-                    <span className="mr-1 opacity-60">{idx + 1}.</span>
-                    {step.title || `Step ${idx + 1}`}
-                  </button>
-                ))}
+              <div className="relative">
+                <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-none -mx-1 px-1">
+                  {steps.map((step, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveStepIndex(idx)}
+                      className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 border whitespace-nowrap ${
+                        idx === activeStepIndex
+                          ? 'bg-pink-600 border-pink-500 text-white shadow-lg shadow-pink-900/30'
+                          : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white'
+                      }`}
+                    >
+                      <span className="mr-1 opacity-60">{idx + 1}.</span>
+                      {step.title || `Step ${idx + 1}`}
+                    </button>
+                  ))}
+                </div>
+                <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-slate-900 to-transparent" />
               </div>
 
               {/* Active step content */}
@@ -138,6 +154,9 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ service, onClose }) 
                       src={currentStep.imageUrl}
                       alt={currentStep.title}
                       className="w-full h-full object-cover transition-all duration-300"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-pink-950/20 via-slate-900 to-purple-950/20 text-slate-500">

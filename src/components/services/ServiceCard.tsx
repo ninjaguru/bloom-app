@@ -45,7 +45,14 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onSelect }) =
             className="relative mb-4 h-36 w-full overflow-hidden rounded-[var(--radius-card)]"
             style={{ backgroundColor: 'var(--color-paper-3)' }}
           >
-            <img src={service.imageUrl} alt={service.title} className="h-full w-full object-cover" />
+            <img
+              src={service.imageUrl}
+              alt={service.title}
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
           </div>
         )}
 
@@ -60,10 +67,12 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onSelect }) =
 
         {/* Details: Duration & Rating */}
         <div className="mb-4 flex items-center gap-4 text-xs" style={{ color: 'var(--color-muted)' }}>
-          <div className="flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" style={{ color: 'var(--color-neutral)' }} />
-            <span>{service.durationMinutes} mins</span>
-          </div>
+          {service.durationMinutes > 0 && (
+            <div className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" style={{ color: 'var(--color-neutral)' }} />
+              <span>{service.durationMinutes} mins</span>
+            </div>
+          )}
           {service.rating > 0 && (
             <div className="flex items-center gap-1 font-semibold" style={{ color: 'var(--color-gold)' }}>
               <Star className="h-3.5 w-3.5 fill-current" />

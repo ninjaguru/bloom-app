@@ -15,8 +15,9 @@ import { useCartStore, selectCartTotals } from '../../stores/cartStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useSubscriptionStore } from '../../stores/subscriptionStore';
 import { getAllAddons } from '../../lib/addons';
-import { ServiceAddon } from '../../types';
-import { Calendar, User, Home, Clock, AlertCircle, CheckCircle, Zap, Plus, Check } from 'lucide-react';
+import { listAddresses, addAddress } from '../../lib/addresses';
+import { ServiceAddon, SavedAddress } from '../../types';
+import { Calendar, User, Home, Clock, AlertCircle, CheckCircle, Zap, Plus, Check, MapPin, BookmarkPlus } from 'lucide-react';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -62,6 +63,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [availableAddons, setAvailableAddons] = useState<ServiceAddon[]>([]);
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [savingAddress, setSavingAddress] = useState(false);
 
   const dates = getAvailableDates();
   const remainingCredits = activeSubscription
@@ -75,6 +79,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     if (isOpen) {
       fetchApartments().then(setApartmentList);
       getAllAddons().then(setAvailableAddons);
+      if (user) {
+        listAddresses(user.uid).then(setSavedAddresses);
+      }
       if (profile) {
         const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ');
         setName(fullName || '');
@@ -90,16 +97,51 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         }
       }
     }
-  }, [isOpen, profile]);
+  }, [isOpen, profile, user]);
 
   const handleApartmentChange = (val: string) => {
     setApartment(val);
+    setSelectedAddressId(null);
     if (val.trim()) {
       setLoadingSlots(true);
       fetchSlotsForApartment(val).then((res) => {
         setSlots(res);
         setLoadingSlots(false);
       });
+    }
+  };
+
+  const handleFlatChange = (val: string) => {
+    setFlat(val);
+    setSelectedAddressId(null);
+  };
+
+  const handleSelectSavedAddress = (addr: SavedAddress) => {
+    setSelectedAddressId(addr.id);
+    setApartment(addr.apartment);
+    setFlat(addr.flat);
+    setLoadingSlots(true);
+    fetchSlotsForApartment(addr.apartment).then((res) => {
+      setSlots(res);
+      setLoadingSlots(false);
+    });
+  };
+
+  const handleSaveCurrentAddress = async () => {
+    if (!user || !apartment.trim() || !flat.trim()) return;
+    setSavingAddress(true);
+    try {
+      const id = await addAddress(user.uid, {
+        label: apartment.trim(),
+        apartment: apartment.trim(),
+        flat: flat.trim(),
+      });
+      if (id) {
+        setSavedAddresses((prev) => [...prev, { id, label: apartment.trim(), apartment: apartment.trim(), flat: flat.trim() }]);
+        setSelectedAddressId(id);
+      }
+    } finally {
+      setSavingAddress(false);
     }
   };
 
@@ -320,6 +362,31 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <Home className="w-3.5 h-3.5" />
             <span>Service address</span>
           </h3>
+
+          {savedAddresses.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {savedAddresses.map((addr) => {
+                const isSelected = selectedAddressId === addr.id;
+                return (
+                  <button
+                    key={addr.id}
+                    type="button"
+                    onClick={() => handleSelectSavedAddress(addr)}
+                    className="flex items-center gap-1.5 rounded-[var(--radius-pill)] px-3 py-1.5 text-xs font-semibold"
+                    style={{
+                      backgroundColor: isSelected ? 'var(--color-accent)' : 'var(--color-paper-2)',
+                      color: isSelected ? 'var(--color-accent-ink)' : 'var(--color-muted)',
+                      border: `1px solid ${isSelected ? 'var(--color-accent)' : 'var(--color-rule)'}`,
+                    }}
+                  >
+                    <MapPin className="w-3 h-3" />
+                    {addr.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="relative">
               <input
@@ -340,12 +407,25 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <input
               type="text"
               value={flat}
-              onChange={(e) => setFlat(e.target.value)}
+              onChange={(e) => handleFlatChange(e.target.value)}
               placeholder="Flat / door no. (e.g. A-204)"
               className={INPUT_CLASS}
               style={INPUT_STYLE}
             />
           </div>
+
+          {user && apartment.trim() && flat.trim() && !selectedAddressId && (
+            <button
+              type="button"
+              onClick={handleSaveCurrentAddress}
+              disabled={savingAddress}
+              className="flex items-center gap-1.5 text-xs font-semibold disabled:opacity-50"
+              style={{ color: 'var(--color-accent)' }}
+            >
+              <BookmarkPlus className="w-3.5 h-3.5" />
+              <span>{savingAddress ? 'Saving...' : 'Save this address'}</span>
+            </button>
+          )}
         </div>
 
         {/* Date Selection */}

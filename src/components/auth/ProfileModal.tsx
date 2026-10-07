@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Award, Share2, Copy, Check, Save, Zap } from 'lucide-react';
+import { X, Award, Share2, Copy, Check, Save, Zap, Bell, BellOff, BellRing, MapPin, Pencil, Trash2, Plus } from 'lucide-react';
 import { LiquidGlassCard } from '../ui/LiquidGlassCard';
 import { GradientButton } from '../ui/GradientButton';
 import { useAuthStore } from '../../stores/authStore';
@@ -9,7 +9,12 @@ import { saveProfile } from '../../lib/auth';
 import { fetchApartments } from '../../lib/booking';
 import { getReferralShareUrl } from '../../lib/referral';
 import { pointsToRupees, getExpiryWarningText } from '../../lib/loyalty';
+import { requestNotificationPermission } from '../../lib/notifications';
+import { listAddresses, addAddress, updateAddress, deleteAddress } from '../../lib/addresses';
 import { ActivePassCard } from '../subscription/ActivePassCard';
+import { SavedAddress } from '../../types';
+
+type NotifPermission = NotificationPermission | 'unsupported';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -39,10 +44,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [notifPermission, setNotifPermission] = useState<NotifPermission>(
+    () => (typeof Notification !== 'undefined' ? Notification.permission : 'unsupported')
+  );
+  const [notifRequesting, setNotifRequesting] = useState(false);
+
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [addrLabel, setAddrLabel] = useState('');
+  const [addrApartment, setAddrApartment] = useState('');
+  const [addrFlat, setAddrFlat] = useState('');
+  const [addressSaving, setAddressSaving] = useState(false);
+  const [addressError, setAddressError] = useState('');
 
   useEffect(() => {
     if (isOpen && user) {
       fetchApartments().then(setApartmentList);
+      listAddresses(user.uid).then(setAddresses);
       if (profile) {
         setFirstName(profile.firstName || '');
         setLastName(profile.lastName || '');
@@ -52,6 +71,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       }
     }
   }, [isOpen, user, profile]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen || !user) return null;
 
@@ -86,6 +115,70 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleEnableNotifications = async () => {
+    setNotifRequesting(true);
+    try {
+      await requestNotificationPermission(user.uid);
+    } finally {
+      setNotifPermission(typeof Notification !== 'undefined' ? Notification.permission : 'unsupported');
+      setNotifRequesting(false);
+    }
+  };
+
+  const openAddAddressForm = () => {
+    setEditingAddressId(null);
+    setAddrLabel('');
+    setAddrApartment('');
+    setAddrFlat('');
+    setAddressError('');
+    setShowAddressForm(true);
+  };
+
+  const openEditAddressForm = (addr: SavedAddress) => {
+    setEditingAddressId(addr.id);
+    setAddrLabel(addr.label);
+    setAddrApartment(addr.apartment);
+    setAddrFlat(addr.flat);
+    setAddressError('');
+    setShowAddressForm(true);
+  };
+
+  const closeAddressForm = () => {
+    setShowAddressForm(false);
+    setEditingAddressId(null);
+  };
+
+  const handleSaveAddress = async () => {
+    if (!addrLabel.trim() || !addrApartment.trim() || !addrFlat.trim()) {
+      setAddressError('Fill in label, apartment and flat number.');
+      return;
+    }
+    setAddressSaving(true);
+    setAddressError('');
+    const data = { label: addrLabel.trim(), apartment: addrApartment.trim(), flat: addrFlat.trim() };
+    try {
+      if (editingAddressId) {
+        const ok = await updateAddress(user.uid, editingAddressId, data);
+        if (!ok) throw new Error('update failed');
+        setAddresses((prev) => prev.map((a) => (a.id === editingAddressId ? { ...a, ...data } : a)));
+      } else {
+        const id = await addAddress(user.uid, data);
+        if (!id) throw new Error('add failed');
+        setAddresses((prev) => [...prev, { id, ...data }]);
+      }
+      closeAddressForm();
+    } catch {
+      setAddressError('Could not save address. Try again.');
+    } finally {
+      setAddressSaving(false);
+    }
+  };
+
+  const handleDeleteAddress = async (id: string) => {
+    const ok = await deleteAddress(user.uid, id);
+    if (ok) setAddresses((prev) => prev.filter((a) => a.id !== id));
   };
 
   return (
@@ -163,6 +256,50 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           </button>
         )}
 
+        {/* Push Notifications Card */}
+        {notifPermission !== 'unsupported' && (
+          <div className="w-full rounded-2xl bg-gradient-to-r from-pink-500/10 via-rose-500/10 to-purple-500/10 border border-pink-500/30 p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                {notifPermission === 'granted' ? (
+                  <BellRing className="w-5 h-5 text-white" />
+                ) : (
+                  <Bell className="w-5 h-5 text-white" />
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-white font-outfit">Push Notifications</p>
+                <p className="text-xs text-slate-400">
+                  {notifPermission === 'granted'
+                    ? 'Enabled — you\'ll get booking and offer alerts'
+                    : notifPermission === 'denied'
+                    ? 'Blocked in your browser settings'
+                    : 'Get alerts for bookings, offers & loyalty points'}
+                </p>
+              </div>
+              {notifPermission === 'granted' ? (
+                <span className="flex items-center space-x-1 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 flex-shrink-0">
+                  <Check className="w-3.5 h-3.5" />
+                  <span>On</span>
+                </span>
+              ) : notifPermission === 'denied' ? (
+                <span className="flex items-center space-x-1 text-xs font-bold px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 flex-shrink-0">
+                  <BellOff className="w-3.5 h-3.5" />
+                  <span>Blocked</span>
+                </span>
+              ) : (
+                <button
+                  onClick={handleEnableNotifications}
+                  disabled={notifRequesting}
+                  className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-pink-500 text-white text-xs font-bold hover:bg-pink-600 transition-colors disabled:opacity-50"
+                >
+                  {notifRequesting ? 'Enabling...' : 'Enable'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Referral Card */}
         <LiquidGlassCard title="Refer a Friend & Earn ₹200" gradient="purple" badge="Invite">
           <p className="text-xs text-slate-300 font-light mb-3">
@@ -234,6 +371,112 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               className="w-full px-4 py-2.5 bg-slate-800/80 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-pink-500"
             />
           </div>
+        </div>
+
+        {/* Saved Addresses */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-pink-400">
+              Saved Addresses
+            </h4>
+            {!showAddressForm && (
+              <button
+                onClick={openAddAddressForm}
+                className="flex items-center space-x-1 text-xs font-semibold text-pink-400 hover:text-pink-300 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Address</span>
+              </button>
+            )}
+          </div>
+
+          {addresses.length === 0 && !showAddressForm && (
+            <p className="text-xs text-slate-500">No saved addresses yet.</p>
+          )}
+
+          <div className="space-y-2">
+            {addresses.map((addr) => (
+              <div
+                key={addr.id}
+                className="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/60"
+              >
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  <MapPin className="w-4 h-4 text-pink-400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate">{addr.label}</p>
+                    <p className="text-xs text-slate-400 truncate">
+                      {addr.flat}, {addr.apartment}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1 flex-shrink-0">
+                  <button
+                    onClick={() => openEditAddressForm(addr)}
+                    className="p-1.5 text-slate-400 hover:text-white transition-colors"
+                    aria-label="Edit address"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteAddress(addr.id)}
+                    className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors"
+                    aria-label="Delete address"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {showAddressForm && (
+            <div className="space-y-2.5 p-3 rounded-xl bg-slate-800/40 border border-slate-700/60">
+              <input
+                type="text"
+                value={addrLabel}
+                onChange={(e) => setAddrLabel(e.target.value)}
+                placeholder="Label (e.g. Home, Office)"
+                className="w-full px-4 py-2.5 bg-slate-800/80 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-pink-500"
+              />
+              <div className="grid grid-cols-2 gap-2.5">
+                <select
+                  value={addrApartment}
+                  onChange={(e) => setAddrApartment(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-800/80 border border-slate-700/80 rounded-xl text-xs text-white focus:outline-none focus:border-pink-500"
+                >
+                  <option value="">— Select Apartment —</option>
+                  {apartmentList.map((apt) => (
+                    <option key={apt} value={apt}>
+                      {apt}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={addrFlat}
+                  onChange={(e) => setAddrFlat(e.target.value)}
+                  placeholder="Flat / Door No."
+                  className="w-full px-4 py-2.5 bg-slate-800/80 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-pink-500"
+                />
+              </div>
+              {addressError && <p className="text-xs text-rose-400 font-medium">{addressError}</p>}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleSaveAddress}
+                  disabled={addressSaving}
+                  className="flex-1 px-3 py-2 rounded-xl bg-pink-500 text-white text-xs font-bold hover:bg-pink-600 transition-colors disabled:opacity-50"
+                >
+                  {addressSaving ? 'Saving...' : editingAddressId ? 'Update Address' : 'Save Address'}
+                </button>
+                <button
+                  onClick={closeAddressForm}
+                  className="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {errorMsg && (
