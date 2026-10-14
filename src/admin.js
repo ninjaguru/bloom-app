@@ -1348,6 +1348,7 @@ const BANGALORE_COMMUNITIES = [
   { name: 'Purva Fountainhead',           area: 'Whitefield' },
   { name: 'Purva Skywood',               area: 'Whitefield' },
   { name: 'Rajapushpa Provincia',         area: 'Whitefield' },
+  { name: 'Republic of Whitefield',       area: 'Whitefield' },
   { name: 'RMZ Latitude',               area: 'Whitefield' },
   { name: 'Salarpuria Greenage',          area: 'Whitefield' },
   { name: 'Salarpuria Sattva Misty Charm',area: 'Whitefield' },

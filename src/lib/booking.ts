@@ -25,6 +25,7 @@ export const FALLBACK_APARTMENTS = [
   'Purva Fountainhead',
   'Purva Skywood',
   'Rajapushpa Provincia',
+  'Republic of Whitefield',
   'RMZ Latitude',
   'Salarpuria Greenage',
   'Salarpuria Sattva Misty Charm',
